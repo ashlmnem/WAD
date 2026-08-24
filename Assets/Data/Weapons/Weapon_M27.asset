@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d7d581ca17f72d4ca506e92ba011090, type: 3}
+  m_Name: Weapon_M27
+  m_EditorClassIdentifier: 
+  weaponId: 
+  displayName: M27 mod 3
+  viewmodelPrefab: {fileID: 3778274139033276176, guid: 8ad8694c87423e248aad025fdabfb0c8,
+    type: 3}
+  worldModelPrefab: {fileID: 3778274139033276176, guid: 8ad8694c87423e248aad025fdabfb0c8,
+    type: 3}
+  fireMode: 0
+  roundsPerMinute: 1200
+  boltActionCycleTime: 0
+  magazineCapacity: 15
+  compatibleAmmoType: {fileID: 11400000, guid: 0dbd39db52e015d4f921a8f9c7e8cfa8, type: 2}
+  reloadTimeSeconds: 2.2
+  requiresChamberAfterReload: 0
+  baseSpreadDegrees: 0.1
+  adsSpreadDegrees: 0
+  recoilPerShot: 1
+  horizontalRecoilPerShot: 0.4
+  recoilRecoverySpeed: 4
+  maxRange: 150
+  damageFalloff:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: -0.002
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 300
+      value: 0.4
+      inSlope: -0.002
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  weightKg: 0.7
+  muzzleFlashPrefab: {fileID: 0}
+  fireSound: {fileID: 8300000, guid: 2eef5762eed00c141a2e4fe7313d9ad0, type: 3}
+  dryFireSound: {fileID: 8300000, guid: 614ee563efc665741bd3274fda6bd181, type: 3}
+  reloadSound: {fileID: 8300000, guid: 6646ebed2b146ac4086f71bc1aacc60b, type: 3}
+  magazineGroundModelPrefab: {fileID: 1426944496053297161, guid: b6ebf838a73e96149a6fb1e699657df8,
+    type: 3}
+  adsFOV: 60
+  adsTransitionSpeed: 8

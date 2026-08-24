@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
+  m_Name: MagType_Glock_17rds
+  m_EditorClassIdentifier: 
+  magazineTypeId: 
+  displayName: Glock 25 Rounds
+  icon: {fileID: 0}
+  ammoType: {fileID: 11400000, guid: 0dbd39db52e015d4f921a8f9c7e8cfa8, type: 2}
+  baseCapacity: 25
+  emptyWeightKg: 0.17
+  groundModelPrefab: {fileID: 1426944496053297161, guid: b6ebf838a73e96149a6fb1e699657df8,
+    type: 3}

@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce2ba60675d86741b92707f8e7cfbdb, type: 3}
+  m_Name: Attachment_M16 CollapsibleStock
+  m_EditorClassIdentifier: 
+  attachmentId: 
+  displayName: M16 Collapsible
+  icon: {fileID: 0}
+  category: 4
+  visualPrefab: {fileID: 492330961901811018, guid: 1a713b706b8e92f46b9ac8fb879bdd7d,
+    type: 3}
+  recoilMultiplier: 0.9
+  spreadMultiplier: 1
+  adsSpeedMultiplier: 1.2
+  adsFOVOverride: 0
+  magazineCapacityOverride: 0
+  weightKg: 0.6
+  compatibleWeapons:
+  - {fileID: 11400000, guid: 55f9a9c48d72fb143888130e801cd369, type: 2}

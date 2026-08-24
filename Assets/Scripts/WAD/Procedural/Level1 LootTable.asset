@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81b4de64483d34d4493e9f5b3b62d95f, type: 3}
+  m_Name: Level1 LootTable
+  m_EditorClassIdentifier: 
+  entries:
+  - itemAsset: {fileID: 11400000, guid: 0dbd39db52e015d4f921a8f9c7e8cfa8, type: 2}
+    weight: 20
+    minQuantity: 1
+    maxQuantity: 30
+  - itemAsset: {fileID: 11400000, guid: 54b1028a243bdc045ac8b545f6806827, type: 2}
+    weight: 10
+    minQuantity: 1
+    maxQuantity: 2
+  - itemAsset: {fileID: 11400000, guid: 031124eed7c9f1f4096aa19bfab043e2, type: 2}
+    weight: 20
+    minQuantity: 1
+    maxQuantity: 3

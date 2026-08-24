@@ -1,0 +1,4 @@
+repository "WAD/WAD@10171457757662@cloud"
+  path "/"
+    br "/main"
+    co "/main"

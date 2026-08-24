@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d90c5b73b5e8c884dbdb8301c8454077, type: 3}
+  m_Name: Level_1
+  m_EditorClassIdentifier: 
+  levelIndex: 0
+  levelName: The Storm
+  subtitle: 
+  flavorText: 
+  sceneName: The Storm
+  proceduralGeneration: 1
+  roomPrefabs:
+  - {fileID: 8886383301504682333, guid: abc847fe24e2fec469a28dfb6e31a0e8, type: 3}
+  - {fileID: 2079788440668907725, guid: 8a042aea0e43a6d4fbb27aed6d8f57d8, type: 3}
+  - {fileID: 3586572246480813559, guid: 753b27f8a44f7494d9e3feef3f54a92b, type: 3}
+  - {fileID: 4480855825399069343, guid: c78349c7d754e4b48a652a9f50e05499, type: 3}
+  exits:
+  - {fileID: 11400000, guid: 4b438b39e44f9d3439ee0aa9ac9c58b6, type: 2}
+  - {fileID: 11400000, guid: 9c454aa9bc4cbfb4fa847bd37d4b3716, type: 2}
+  - {fileID: 11400000, guid: e1c893efdc88acc439b2127fac7ee549, type: 2}
+  possibleEntities:
+  - {fileID: 11400000, guid: 504bc85774a3a9440b41df4186149a8d, type: 2}

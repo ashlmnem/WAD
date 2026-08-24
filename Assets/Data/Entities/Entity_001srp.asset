@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bd330dc35a651d4cba9a39aa6fc432d, type: 3}
+  m_Name: Entity_001srp
+  m_EditorClassIdentifier: 
+  entityId: Entity-001srp
+  displayName: Entity-001srp
+  description: 
+  discoveredOnLevel: 1
+  worldPrefab: {fileID: 1829079327181614617, guid: be30d8424fc75d64eb9365f8f5f4756a,
+    type: 3}
+  icon: {fileID: 0}
+  category: 0
+  canTriggerLevelExit: 1
+  exitTargetLevelIndex: -1
+  equipablePrefab: {fileID: 3694231539529512315, guid: b781cfab37f9905419a236f5c388a596,
+    type: 3}
+  weightKg: 1
+  stackable: 0
+  maxStackSize: 1

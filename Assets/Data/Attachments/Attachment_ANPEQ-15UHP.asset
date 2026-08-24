@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce2ba60675d86741b92707f8e7cfbdb, type: 3}
+  m_Name: Attachment_ANPEQ-15UHP
+  m_EditorClassIdentifier: 
+  attachmentId: 
+  displayName: AN/PEQ-15UHP
+  icon: {fileID: 0}
+  category: 1
+  visualPrefab: {fileID: 3860153379729764038, guid: d194566d1daa533439ac307edaa9c2c7,
+    type: 3}
+  recoilMultiplier: 1
+  spreadMultiplier: 0.5
+  adsSpeedMultiplier: 0.7
+  adsFOVOverride: 0
+  magazineCapacityOverride: 0
+  weightKg: 0.4
+  compatibleWeapons:
+  - {fileID: 11400000, guid: a9497db1c2e756c418a8567b32d82f17, type: 2}
+  - {fileID: 11400000, guid: 55f9a9c48d72fb143888130e801cd369, type: 2}
+  - {fileID: 11400000, guid: e3e8cd9bab95d49448297b19318b5911, type: 2}
+  - {fileID: 11400000, guid: f94035515c0995f41b03e13f1175c67d, type: 2}

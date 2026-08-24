@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09bd531cfc431e44990ea75f84836dcd, type: 3}
+  m_Name: MagazineTable_Level1
+  m_EditorClassIdentifier: 
+  entries:
+  - magazineType: {fileID: 11400000, guid: 88db3fcfbc00aa646811f1b5a6d0255a, type: 2}
+    weight: 10
+    minFillPercent: 0
+    maxFillPercent: 1
+  - magazineType: {fileID: 0}
+    weight: 9
+    minFillPercent: 0
+    maxFillPercent: 1
+  - magazineType: {fileID: 0}
+    weight: 8
+    minFillPercent: 0
+    maxFillPercent: 1
+  - magazineType: {fileID: 0}
+    weight: 7
+    minFillPercent: 0
+    maxFillPercent: 1
+  - magazineType: {fileID: 0}
+    weight: 5
+    minFillPercent: 0
+    maxFillPercent: 1

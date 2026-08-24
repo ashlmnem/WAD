@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce2ba60675d86741b92707f8e7cfbdb, type: 3}
+  m_Name: Attachment_G3Fixed
+  m_EditorClassIdentifier: 
+  attachmentId: 
+  displayName: Fixed Stock
+  icon: {fileID: 0}
+  category: 4
+  visualPrefab: {fileID: 5488326469870288669, guid: ba77dab60e3bb1d47b1c9708ffca9c18,
+    type: 3}
+  recoilMultiplier: 0.7
+  spreadMultiplier: 0.9
+  adsSpeedMultiplier: 1.4
+  adsFOVOverride: 0
+  magazineCapacityOverride: 0
+  weightKg: 0.6
+  compatibleWeapons:
+  - {fileID: 11400000, guid: e3e8cd9bab95d49448297b19318b5911, type: 2}
+  - {fileID: 11400000, guid: f94035515c0995f41b03e13f1175c67d, type: 2}

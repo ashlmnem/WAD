@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
+  m_Name: MagType_M1911_7rds
+  m_EditorClassIdentifier: 
+  magazineTypeId: 
+  displayName: M1911 7 Rounds
+  icon: {fileID: 0}
+  ammoType: {fileID: 11400000, guid: 846d8e9aac1a82a489d8c493b636e52f, type: 2}
+  baseCapacity: 7
+  emptyWeightKg: 0.1
+  groundModelPrefab: {fileID: 469867848661841724, guid: 51a23d766254fb94a8f072483f796eda,
+    type: 3}

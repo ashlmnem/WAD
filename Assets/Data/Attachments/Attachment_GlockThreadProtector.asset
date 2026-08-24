@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce2ba60675d86741b92707f8e7cfbdb, type: 3}
+  m_Name: Attachment_GlockThreadProtector
+  m_EditorClassIdentifier: 
+  attachmentId: 
+  displayName: ThreadProtector
+  icon: {fileID: 0}
+  category: 3
+  visualPrefab: {fileID: 4756834721701529921, guid: 2f81bcd908d4701419ad1d76892138bd,
+    type: 3}
+  recoilMultiplier: 1
+  spreadMultiplier: 1
+  adsSpeedMultiplier: 0.95
+  adsFOVOverride: 0
+  magazineCapacityOverride: 0
+  weightKg: 0.1
+  compatibleWeapons:
+  - {fileID: 11400000, guid: 54b1028a243bdc045ac8b545f6806827, type: 2}
+  - {fileID: 11400000, guid: f94035515c0995f41b03e13f1175c67d, type: 2}
