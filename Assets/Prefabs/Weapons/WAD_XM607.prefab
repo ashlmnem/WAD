@@ -396,7 +396,7 @@ MonoBehaviour:
     acceptedCategories: 00000000
   - railId: HandguardLowerRail
     mountTransform: {fileID: 7887813125651971903}
-    acceptedCategories: 01000000
+    acceptedCategories: 0100000002000000
   - railId: MuzzlePoint
     mountTransform: {fileID: 3288397620004940223}
     acceptedCategories: 03000000
