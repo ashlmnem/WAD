@@ -6,7 +6,7 @@ namespace WAD.Weapons
     public class MagazinesCreator : MonoBehaviour
     {
         [Header("Activation Bind")]
-        public KeyCode cheat_magazine_bind;
+        public KeyCode cheat_magazine_bind = KeyCode.F6;
 
         private WeaponController weapon;
         [Header("Magazine Data")]

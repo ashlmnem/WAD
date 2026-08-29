@@ -181,6 +181,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &220426624 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1829079327181614617, guid: be30d8424fc75d64eb9365f8f5f4756a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2667189547527433045}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &220426625 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3928932649107414096, guid: be30d8424fc75d64eb9365f8f5f4756a,
+    type: 3}
+  m_PrefabInstance: {fileID: 2667189547527433045}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 220426624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7fd3cf25f60ff548bbf0e2eff94c234, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &220426631
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 220426624}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35724ee6297861b4eb181439ffcedaca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazinesCreator
+  cheat_magazine_bind: 287
+  weapon: {fileID: 220426625}
+  capacity: 15
+  currentRounds: -1
 --- !u!1001 &250798061
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -848,6 +882,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f7201a12d95ffc409449d95f23cf332, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &815789760
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 815789763}
+  - component: {fileID: 815789764}
+  m_Layer: 0
+  m_Name: Cheats
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &815789763
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 815789760}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &815789764
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 815789760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29f85555d0b2e0847bd24af2af77cc96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Cheats.CheatManager
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1517,7 +1595,11 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 1829079327181614617, guid: be30d8424fc75d64eb9365f8f5f4756a,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 220426631}
   m_SourcePrefab: {fileID: 100100000, guid: be30d8424fc75d64eb9365f8f5f4756a, type: 3}
 --- !u!1001 &4680906021903535416
 PrefabInstance:
@@ -1788,6 +1870,21 @@ PrefabInstance:
       propertyPath: inventory
       value: 
       objectReference: {fileID: 1986599281}
+    - target: {fileID: 4663457516287141444, guid: a965188259e1307429dfebe4f8b36386,
+        type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4663457516287141444, guid: a965188259e1307429dfebe4f8b36386,
+        type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4663457516287141444, guid: a965188259e1307429dfebe4f8b36386,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5212068404963004340, guid: a965188259e1307429dfebe4f8b36386,
         type: 3}
       propertyPath: inventory
@@ -1818,6 +1915,7 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1273272869}
+  - {fileID: 815789763}
   - {fileID: 1184787971}
   - {fileID: 316223838}
   - {fileID: 477924396}
