@@ -37,7 +37,7 @@ namespace WAD.Weapons
 
         [Header("Animation")]
         public Animator animator;
-        [Tooltip("Getriggert beim Schuss aus der Hüfte (nicht zielend)")]
+        [Tooltip("Getriggert beim Schuss aus der Hï¿½fte (nicht zielend)")]
         public string fireHipAnimTrigger = "Fire_Hip";
         [Tooltip("Getriggert beim Schuss waehrend ADS (zielend)")]
         public string fireADSAnimTrigger = "Fire_ADS";
@@ -61,7 +61,7 @@ namespace WAD.Weapons
         [Header("Modell-Korrektur")]
         [Tooltip("Falls das importierte Modell falsch herum zeigt (z.B. Lauf zeigt rueckwaerts): hier das sichtbare Modell-Kindobjekt zuweisen")]
         public Transform modelRoot;
-        [Tooltip("Korrektur-Rotation in Grad, z.B. (0, 180, 0) wenn das Modell um 180° verdreht importiert wurde")]
+        [Tooltip("Korrektur-Rotation in Grad, z.B. (0, 180, 0) wenn das Modell um 180ï¿½ verdreht importiert wurde")]
         public Vector3 modelRotationOffsetEuler = Vector3.zero;
 
         // --- Zustand ---
@@ -70,7 +70,7 @@ namespace WAD.Weapons
         private bool isChamberedRoundReady = true;
         private float currentRecoilAccumulated;
         private bool loggedMissingWeaponData;
-        private bool isEquipped; // true erst NACHDEM PlayerWeaponHolder.PickUpWeapon() sie ausgeruestet hat
+        public bool isEquipped  { get; private set; } // true erst NACHDEM PlayerWeaponHolder.PickUpWeapon() sie ausgeruestet hat
         public bool IsAiming { get; private set; }
 
         /// <summary> Von PlayerWeaponHolder aufgerufen - verhindert, dass lose in der Welt liegende (noch nicht aufgehobene) Waffen auf Eingaben reagieren. </summary>
@@ -142,7 +142,7 @@ namespace WAD.Weapons
             {
                 if (!loggedMissingWeaponData)
                 {
-                    Debug.LogWarning($"[WeaponController:{gameObject.name}] 'Weapon Data' ist nicht zugewiesen - Waffe ist funktionsunfähig, bis das im Inspector nachgetragen wird.");
+                    Debug.LogWarning($"[WeaponController:{gameObject.name}] 'Weapon Data' ist nicht zugewiesen - Waffe ist funktionsunfï¿½hig, bis das im Inspector nachgetragen wird.");
                     loggedMissingWeaponData = true;
                 }
                 return;
