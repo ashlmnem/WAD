@@ -5,8 +5,9 @@ using WAD.Weapons;
 namespace WAD.Weapons.UI
 {
     /// <summary>
-    /// Zeigt Munitionsinfo NUR waehrend 'V' gehalten wird. Mit Schutz gegen
-    /// unvollstaendig konfigurierte Magazine (fehlender Ammo Type).
+    /// Zeigt Munitionsinfo NUR waehrend 'V' gehalten wird. Reserve-Magazine
+    /// zeigen jetzt ihren Typ-NAMEN (nicht nur Fuellstand) - wichtig, um
+    /// Trommel-/Kurzmagazine im Vorrat auseinanderzuhalten (Punkt 8).
     /// </summary>
     public class WeaponInspectUI : MonoBehaviour
     {
@@ -53,18 +54,17 @@ namespace WAD.Weapons.UI
                 weaponNameText.text = active.weaponData.displayName;
             }
 
-            if (active.loadedMagazine != null && active.loadedMagazine.ammoType != null)
+            if (active.loadedMagazine != null && active.loadedMagazine.magazineType != null)
             {
-                if (ammoTypeText != null) ammoTypeText.text = active.loadedMagazine.ammoType.displayName;
+                if (ammoTypeText != null) ammoTypeText.text = active.loadedMagazine.magazineType.displayName;
                 if (magazineFillText != null)
                     magazineFillText.text = $"{active.loadedMagazine.currentRounds} / {active.loadedMagazine.capacity}";
             }
             else if (active.loadedMagazine != null)
             {
-                // Magazin vorhanden, aber Ammo Type fehlt im Inspector - haeufigster Setup-Fehler
-                if (ammoTypeText != null) ammoTypeText.text = "(Ammo Type fehlt!)";
+                if (ammoTypeText != null) ammoTypeText.text = "(Magazine Type fehlt!)";
                 if (magazineFillText != null)
-                    magazineFillText.text = $"{active.loadedMagazine.currentRounds} / {active.loadedMagazine.capacity}";
+                    magazineFillText.text = $"{active.loadedMagazine.currentRounds} / -";
             }
             else
             {
@@ -83,10 +83,10 @@ namespace WAD.Weapons.UI
                     string list = "";
                     foreach (var mag in active.reserveMagazines)
                     {
-                        if (mag == null) continue;
-                        list += $"{mag.currentRounds}/{mag.capacity}  ";
+                        if (mag == null || mag.magazineType == null) continue;
+                        list += $"{mag.magazineType.displayName}: {mag.currentRounds}/{mag.capacity}\n";
                     }
-                    reserveMagazinesText.text = list.Trim();
+                    reserveMagazinesText.text = list.TrimEnd();
                 }
             }
         }

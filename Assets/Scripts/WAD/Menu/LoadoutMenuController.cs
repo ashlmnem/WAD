@@ -70,7 +70,7 @@ namespace WAD.Menu
             }
             else if (prefabToShow == null)
             {
-                Debug.LogWarning($"[LoadoutMenu] {weapon.displayName}: weder World Model Prefab noch Viewmodel Prefab gesetzt - keine 3D-Vorschau möglich.");
+                Debug.LogWarning($"[LoadoutMenu] {weapon.displayName}: weder World Model Prefab noch Viewmodel Prefab gesetzt - keine 3D-Vorschau m glich.");
             }
 
             if (weaponNameText != null) weaponNameText.text = weapon.displayName;
@@ -92,7 +92,6 @@ namespace WAD.Menu
                 }
             }
         }
-
         // ---- Attachment-Wechsel pro Rail ----
         public void CycleAttachment(string railId, int direction)
         {

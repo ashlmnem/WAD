@@ -24,6 +24,7 @@ namespace WAD.Weapons
         public TarkovMovementController movementController;
         public WeaponAttachmentManager attachments; // optional
         public PlayerLean playerLean; // optional, fuer Blindfeuer
+        public WAD.Weapons.Casings.ShellCasingEjector casingEjector; // optional, fuer Huelsenauswurf
 
         [Header("Munition")]
         public Magazine loadedMagazine;
@@ -37,7 +38,7 @@ namespace WAD.Weapons
 
         [Header("Animation")]
         public Animator animator;
-        [Tooltip("Getriggert beim Schuss aus der Hüfte (nicht zielend)")]
+        [Tooltip("Getriggert beim Schuss aus der HÃ¼fte (nicht zielend)")]
         public string fireHipAnimTrigger = "Fire_Hip";
         [Tooltip("Getriggert beim Schuss waehrend ADS (zielend)")]
         public string fireADSAnimTrigger = "Fire_ADS";
@@ -61,8 +62,16 @@ namespace WAD.Weapons
         [Header("Modell-Korrektur")]
         [Tooltip("Falls das importierte Modell falsch herum zeigt (z.B. Lauf zeigt rueckwaerts): hier das sichtbare Modell-Kindobjekt zuweisen")]
         public Transform modelRoot;
-        [Tooltip("Korrektur-Rotation in Grad, z.B. (0, 180, 0) wenn das Modell um 180° verdreht importiert wurde")]
+        [Tooltip("Korrektur-Rotation in Grad, z.B. (0, 180, 0) wenn das Modell um 180Â° verdreht importiert wurde")]
         public Vector3 modelRotationOffsetEuler = Vector3.zero;
+
+        [Header("ADS-Ausrichtung (Punkt 10)")]
+        [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root")]
+        public Transform defaultIronSightAimPoint;
+        [Tooltip("Wie schnell die Waffe beim ADS zur Kamera hin ausgerichtet wird")]
+        public float adsPositionLerpSpeed = 10f;
+        private Vector3 hipFirePosition; // urspruengliche Position relativ zum WeaponSocket
+        private bool hipFirePositionCaptured;
 
         // --- Zustand ---
         private float lastFireTime = -999f;
@@ -70,7 +79,7 @@ namespace WAD.Weapons
         private bool isChamberedRoundReady = true;
         private float currentRecoilAccumulated;
         private bool loggedMissingWeaponData;
-        private bool isEquipped; // true erst NACHDEM PlayerWeaponHolder.PickUpWeapon() sie ausgeruestet hat
+        public bool isEquipped  { get; private set; } // true erst NACHDEM PlayerWeaponHolder.PickUpWeapon() sie ausgeruestet hat
         public bool IsAiming { get; private set; }
 
         /// <summary> Von PlayerWeaponHolder aufgerufen - verhindert, dass lose in der Welt liegende (noch nicht aufgehobene) Waffen auf Eingaben reagieren. </summary>
@@ -96,7 +105,7 @@ namespace WAD.Weapons
 
             if (attachments != null)
             {
-                attachments.OnAttachmentsChanged += ApplyMagazineCapacityOverride;
+                attachments.OnAttachmentsChanged += ApplyMagazineTypeOverride;
             }
         }
 
@@ -115,22 +124,29 @@ namespace WAD.Weapons
         {
             if (attachments != null)
             {
-                attachments.OnAttachmentsChanged -= ApplyMagazineCapacityOverride;
+                attachments.OnAttachmentsChanged -= ApplyMagazineTypeOverride;
             }
         }
 
-        private void ApplyMagazineCapacityOverride()
+        /// <summary>
+        /// Wird aufgerufen, wenn sich Attachments aendern (z.B. Trommelmagazin
+        /// montiert/entfernt, Punkt 8) - wechselt den Magazin-TYP des geladenen
+        /// Magazins, nicht nur eine Zahl. Patronenzahl wird auf die neue
+        /// Kapazitaet begrenzt, aber nicht ueberschrieben.
+        /// </summary>
+        private void ApplyMagazineTypeOverride()
         {
             if (attachments == null || loadedMagazine == null) return;
 
-            int overrideCapacity = attachments.GetMagazineCapacityOverride();
-            if (overrideCapacity > 0)
+            MagazineTypeSO overrideType = attachments.GetMagazineTypeOverride();
+            MagazineTypeSO targetType = overrideType != null ? overrideType : weaponData?.DefaultMagazineType;
+
+            if (targetType != null && loadedMagazine.magazineType != targetType)
             {
-                loadedMagazine.capacity = overrideCapacity;
-            }
-            else if (weaponData != null)
-            {
-                loadedMagazine.capacity = weaponData.magazineCapacity;
+                int oldRounds = loadedMagazine.currentRounds;
+                loadedMagazine.magazineType = targetType;
+                loadedMagazine.currentRounds = Mathf.Min(oldRounds, targetType.baseCapacity);
+                NotifyAmmoChanged();
             }
         }
 
@@ -142,13 +158,14 @@ namespace WAD.Weapons
             {
                 if (!loggedMissingWeaponData)
                 {
-                    Debug.LogWarning($"[WeaponController:{gameObject.name}] 'Weapon Data' ist nicht zugewiesen - Waffe ist funktionsunfähig, bis das im Inspector nachgetragen wird.");
+                    Debug.LogWarning($"[WeaponController:{gameObject.name}] 'Weapon Data' ist nicht zugewiesen - Waffe ist funktionsunfÃ¤hig, bis das im Inspector nachgetragen wird.");
                     loggedMissingWeaponData = true;
                 }
                 return;
             }
 
             HandleAimInput();
+            HandleADSPositioning();
             HandleFireInput();
             HandleReloadInput();
             HandleBoltActionInput();
@@ -181,6 +198,38 @@ namespace WAD.Weapons
                 playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, targetFOV,
                     Time.deltaTime * weaponData.adsTransitionSpeed * adsSpeedMult);
             }
+        }
+
+        /// <summary>
+        /// Richtet die Waffe so aus, dass der Zielpunkt der AKTIVEN Optik
+        /// (oder ohne montierte Optik: 'Default Iron Sight Aim Point') exakt
+        /// vor der Kamera liegt. Loest das Riser-Problem: bisher aenderte ADS
+        /// nur das FOV, die Sichtlinie ging aber immer durch die Kimme statt
+        /// durch eine erhoehte Optik.
+        /// </summary>
+        private void HandleADSPositioning()
+        {
+            if (playerCamera == null || transform.parent == null) return;
+
+            Transform aimPoint = attachments != null ? attachments.GetOpticAimPoint() : null;
+            if (aimPoint == null) aimPoint = defaultIronSightAimPoint;
+
+            Vector3 targetLocalPosition = Vector3.zero; // Hueft-Position = Baseline
+
+            if (IsAiming && aimPoint != null)
+            {
+                Vector3 originalLocalPos = transform.localPosition;
+                transform.localPosition = Vector3.zero; // kurz auf Hueft-Baseline setzen zum Messen
+
+                Vector3 worldOffsetNeeded = playerCamera.transform.position - aimPoint.position;
+                Vector3 localOffsetNeeded = transform.parent.InverseTransformVector(worldOffsetNeeded);
+
+                transform.localPosition = originalLocalPos; // sofort zurueck fuer sanftes Lerp
+                targetLocalPosition = localOffsetNeeded;
+            }
+
+            transform.localPosition = Vector3.Lerp(transform.localPosition, targetLocalPosition,
+                adsPositionLerpSpeed * Time.deltaTime);
         }
 
         private void HandleFireInput()
@@ -319,6 +368,11 @@ namespace WAD.Weapons
                 audioSource.PlayOneShot(weaponData.fireSound);
             }
 
+            if (casingEjector != null && loadedMagazine.ammoType.casingPrefab != null)
+            {
+                casingEjector.EjectCasing(loadedMagazine.ammoType.casingPrefab);
+            }
+
             // Fire_Hip vs Fire_ADS - je nach aktuellem Zielzustand
             string fireTrigger = IsAiming ? fireADSAnimTrigger : fireHipAnimTrigger;
             if (animator != null && !string.IsNullOrEmpty(fireTrigger))
@@ -377,6 +431,7 @@ namespace WAD.Weapons
             foreach (var mag in reserveMagazines)
             {
                 if (mag.IsEmpty) continue;
+                if (weaponData != null && !weaponData.AcceptsMagazine(mag.magazineType)) continue;
                 if (best == null || mag.currentRounds > best.currentRounds) best = mag;
             }
             return best;

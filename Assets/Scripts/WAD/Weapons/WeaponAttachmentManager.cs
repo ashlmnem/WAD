@@ -5,9 +5,7 @@ namespace WAD.Weapons.Attachments
 {
     /// <summary>
     /// Liegt auf demselben Objekt wie WeaponController. Verwaltet montierte
-    /// Attachments PRO RAIL (nicht pro Kategorie) - eine Schiene kann je nach
-    /// Konfiguration verschiedene Kategorien akzeptieren (z.B. Laser ODER
-    /// Vordergriff auf derselben Seitenschiene).
+    /// Attachments PRO RAIL und stellt aggregierte Stat-Multiplikatoren bereit.
     /// </summary>
     public class WeaponAttachmentManager : MonoBehaviour
     {
@@ -22,7 +20,6 @@ namespace WAD.Weapons.Attachments
         public RailMount GetRail(string railId) => railMounts.Find(r => r.railId == railId);
         public AttachmentSO GetEquipped(string railId) => equippedByRail.TryGetValue(railId, out var a) ? a : null;
 
-        /// <summary> Versucht, ein Attachment auf einer bestimmten Schiene zu montieren. Prueft Kategorie-Kompatibilitaet. </summary>
         public bool EquipAttachment(string railId, AttachmentSO attachment)
         {
             var rail = GetRail(railId);
@@ -40,7 +37,7 @@ namespace WAD.Weapons.Attachments
 
             RemoveAttachment(railId);
 
-            if (attachment == null) return true; // bewusst leer geraeumt
+            if (attachment == null) return true;
 
             equippedByRail[railId] = attachment;
 
@@ -73,7 +70,6 @@ namespace WAD.Weapons.Attachments
             OnAttachmentsChanged?.Invoke();
         }
 
-        // ---- Aggregierte Werte (ueber ALLE montierten Attachments) ----
         public float GetRecoilMultiplier() => Aggregate(a => a.recoilMultiplier);
         public float GetSpreadMultiplier() => Aggregate(a => a.spreadMultiplier);
         public float GetADSSpeedMultiplier() => Aggregate(a => a.adsSpeedMultiplier);
@@ -87,14 +83,30 @@ namespace WAD.Weapons.Attachments
             return 0f;
         }
 
-        /// <summary> 0 = keine Aenderung (Basis-Kapazitaet der Waffe gilt), sonst Override durch montiertes Magazin-Attachment. </summary>
-        public int GetMagazineCapacityOverride()
+        /// <summary> Aktives Magazin-Attachment (z.B. Trommelmagazin) - null wenn keins montiert (Punkt 8). </summary>
+        public MagazineTypeSO GetMagazineTypeOverride()
         {
             foreach (var a in equippedByRail.Values)
             {
-                if (a.category == AttachmentCategory.Magazine && a.magazineCapacityOverride > 0) return a.magazineCapacityOverride;
+                if (a.category == AttachmentCategory.Magazine && a.magazineTypeOverride != null) return a.magazineTypeOverride;
             }
-            return 0;
+            return null;
+        }
+        /// <summary> Findet den "ADS_AimPoint"-Kindpunkt der aktuell montierten Optik, falls vorhanden (Punkt 10/11). </summary>
+        public Transform GetOpticAimPoint()
+        {
+            if (!spawnedVisuals.TryGetValue(FindOpticRailId(), out var visual) || visual == null) return null;
+            var aimPoint = visual.transform.Find("ADS_AimPoint");
+            return aimPoint;
+        }
+
+        private string FindOpticRailId()
+        {
+            foreach (var kvp in equippedByRail)
+            {
+                if (kvp.Value.category == AttachmentCategory.Optic) return kvp.Key;
+            }
+            return null;
         }
 
         public float GetTotalWeightBonusKg()

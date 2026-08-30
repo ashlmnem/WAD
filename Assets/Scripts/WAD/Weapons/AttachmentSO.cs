@@ -1,4 +1,5 @@
 using UnityEngine;
+using WAD.Weapons;
 
 namespace WAD.Weapons.Attachments
 {
@@ -22,12 +23,11 @@ namespace WAD.Weapons.Attachments
         public float recoilMultiplier = 1f;
         public float spreadMultiplier = 1f;
         public float adsSpeedMultiplier = 1f;
-        [Tooltip("0 = kein Override, sonst ersetzt dies WeaponSO.adsFOV")]
         public float adsFOVOverride = 0f;
 
-        [Header("Magazin-spezifisch (nur bei Category = Magazine)")]
-        [Tooltip("0 = kein Override, sonst ersetzt dies die Basis-Magazinkapazitaet der Waffe (z.B. Extended Mag +10)")]
-        public int magazineCapacityOverride = 0;
+        [Header("Magazin-spezifisch (nur bei Category = Magazine, Punkt 8)")]
+        [Tooltip("Montieren dieses Attachments wechselt den aktuell geladenen Magazin-TYP (z.B. Trommelmagazin statt Standard) - leer lassen fuer nicht-Magazin-Attachments")]
+        public MagazineTypeSO magazineTypeOverride;
 
         [Header("Gewicht")]
         public float weightKg = 0.2f;
