@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 3399389676763723388}
   - component: {fileID: 7078663509074192295}
   - component: {fileID: 4755312624790998966}
-  - component: {fileID: 3824501724485425940}
   - component: {fileID: 1838074162751106703}
   - component: {fileID: 3928932649107414096}
   m_Layer: 0
@@ -32,7 +31,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -0.08, y: 1.16, z: 4.477}
-  m_LocalScale: {x: 0.1, y: 0.3, z: 0.3}
+  m_LocalScale: {x: 0.1, y: 0.11613001, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -62,6 +61,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -83,9 +87,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!135 &4755312624790998966
 SphereCollider:
@@ -108,29 +114,6 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &3824501724485425940
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1829079327181614617}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bf33b1b6169adff47b89b2c2287212d3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  entityData: {fileID: 11400000, guid: 504bc85774a3a9440b41df4186149a8d, type: 2}
-  linkedExit: {fileID: 11400000, guid: e1c893efdc88acc439b2127fac7ee549, type: 2}
-  weaponHolder: {fileID: 0}
-  chanceForM27: 0.75
-  m27Prefab: {fileID: 3778274139033276176, guid: 8ad8694c87423e248aad025fdabfb0c8,
-    type: 3}
-  staccato9Prefab: {fileID: 446167962698277617, guid: 6fd2fe79a6035c34a8b6af14c39303a5,
-    type: 3}
-  helicopterPrefab: {fileID: 2730279407527709972, guid: c3b0fbc0599a72240ba411e0783496db,
-    type: 3}
-  helicopterSpawnPoint: {fileID: 0}
 --- !u!114 &1838074162751106703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,7 +126,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32f852ad4d309ca46af8be90faa4a54b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemAsset: {fileID: 1829079327181614617}
+  itemAsset: {fileID: 11400000, guid: 504bc85774a3a9440b41df4186149a8d, type: 2}
   quantity: 1
 --- !u!114 &3928932649107414096
 MonoBehaviour:
@@ -164,7 +147,7 @@ MonoBehaviour:
   attachments: {fileID: 0}
   playerLean: {fileID: 0}
   loadedMagazine:
-    ammoType: {fileID: 0}
+    ammoType: {fileID: 11400000, guid: f8e3ef8cdd9baea4bab76a9b7f6b554f, type: 2}
     capacity: 1
     currentRounds: 1
   reserveMagazines: []

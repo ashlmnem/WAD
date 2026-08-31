@@ -278,6 +278,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 794061201136308302}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: d72087b22f586e146a50033e574bda9c,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8660693038501796548}
   m_SourcePrefab: {fileID: 100100000, guid: d72087b22f586e146a50033e574bda9c, type: 3}
 --- !u!1 &3778274139033276176 stripped
 GameObject:
@@ -296,6 +300,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -473,6 +478,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -558,6 +564,21 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &8660693038501796548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3778274139033276176}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 35724ee6297861b4eb181439ffcedaca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazinesCreator
+  cheat_magazine_bind: 287
+  capacity: 15
+  currentRounds: -1
 --- !u!4 &4550026382032229802 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
