@@ -27,7 +27,7 @@ namespace WAD.Weapons
         public float roundsPerMinute = 600f;
         public float boltActionCycleTime = 1.2f;
 
-        [Header("Kompatible Magazine (Punkt 6+7)")]
+        [Header("Kompatible Magazine")]
         [Tooltip("Liste aller Magazin-Typen, die diese Waffe laden kann - der erste Eintrag ist der Standard beim Erstausruesten. Mehrere Waffen koennen denselben MagazineTypeSO in ihrer Liste haben (z.B. Staccato-9 + M27 teilen sich das gleiche Magazin).")]
         public List<MagazineTypeSO> compatibleMagazineTypes = new List<MagazineTypeSO>();
         public MagazineTypeSO DefaultMagazineType => compatibleMagazineTypes.Count > 0 ? compatibleMagazineTypes[0] : null;
@@ -63,8 +63,6 @@ namespace WAD.Weapons
         public AudioClip reloadSound;
 
         public float SecondsBetweenShots => 60f / Mathf.Max(1f, roundsPerMinute);
-
-        // Helper property to get magazine capacity from default magazine
-        public int magazineCapacity => DefaultMagazineType != null ? DefaultMagazineType.magazineCapacity : 0;
     }
 }
+

@@ -28,7 +28,7 @@ namespace WAD.Taskmaster
         {
             if (taskmasterUI == null)
             {
-                taskmasterUI = FindObjectOfType<TaskmasterUI>();
+                taskmasterUI = FindFirstObjectByType<TaskmasterUI>();
             }
             taskmasterUI?.Open(this);
         }

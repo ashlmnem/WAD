@@ -9,9 +9,11 @@ namespace WAD.Weapons
         public KeyCode cheat_magazine_bind = KeyCode.F6;
 
         private WeaponController weapon;
+
         [Header("Magazine Data")]
-        public int capacity = 15;
-        [Tooltip("-1 = voll. Sonst exakte Anzahl Patronen in diesem gefundenen Magazin.")]
+        [Tooltip("Leer lassen, um automatisch den Standard-Magazintyp der Waffe zu verwenden (weaponData.DefaultMagazineType)")]
+        public MagazineTypeSO overrideMagazineType;
+        [Tooltip("-1 = voll. Sonst exakte Anzahl Patronen in diesem Cheat-Magazin.")]
         public int currentRounds = -1;
 
         void Start()
@@ -37,12 +39,20 @@ namespace WAD.Weapons
 
         public void CheatMagazine()
         {
-            if (weapon.isEquipped && weapon != null && weapon.weaponData != null)
+            if (weapon != null && weapon.isEquipped && weapon.weaponData != null)
             {
-                var magazine = new Magazine(weapon.weaponData.compatibleAmmoType, capacity, currentRounds);
+                MagazineTypeSO type = overrideMagazineType != null ? overrideMagazineType : weapon.weaponData.DefaultMagazineType;
+                if (type == null)
+                {
+                    Debug.LogWarning($"{gameObject.name}: Weder 'Override Magazine Type' noch ein Standard-Magazintyp auf der Waffe vorhanden.", gameObject);
+                    return;
+                }
+
+                var magazine = new Magazine(type, currentRounds);
                 weapon.reserveMagazines.Add(magazine);
                 Debug.Log($"Added 1 magazine to {gameObject.name}, now {weapon.reserveMagazines.Count} magazines", gameObject);
             }
         }
     }
 }
+

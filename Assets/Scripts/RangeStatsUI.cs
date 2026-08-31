@@ -20,7 +20,7 @@ namespace WAD.ShootingRange
         {
             WeaponController.GlobalOnFired += HandleShotFired;
 
-            foreach (var target in FindObjectsOfType<ShootingRangeTarget>())
+            foreach (var target in FindObjectsByType<ShootingRangeTarget>(FindObjectsSortMode.None))
             {
                 target.OnHit += HandleTargetHit;
             }
@@ -30,7 +30,7 @@ namespace WAD.ShootingRange
         {
             WeaponController.GlobalOnFired -= HandleShotFired;
 
-            foreach (var target in FindObjectsOfType<ShootingRangeTarget>())
+            foreach (var target in FindObjectsByType<ShootingRangeTarget>(FindObjectsSortMode.None))
             {
                 target.OnHit -= HandleTargetHit;
             }

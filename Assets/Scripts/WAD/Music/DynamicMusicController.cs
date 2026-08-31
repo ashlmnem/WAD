@@ -71,7 +71,7 @@ namespace WAD.Levels
             // FindObjectsOfType ist bei ueblichen Gegneranzahlen pro Level unkritisch;
             // bei sehr vielen Gegnern spaeter ggf. auf einen zentralen "aktive Gegner"-
             // Registry-Ansatz wie in EnemySpawner umstellen.
-            var enemies = FindObjectsOfType<EnemyController>();
+            var enemies = FindObjectsByType<EnemyController>(FindObjectsSortMode.None);
             foreach (var enemy in enemies)
             {
                 if (enemy.IsEngagingPlayer) return true;
