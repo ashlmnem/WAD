@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce2ba60675d86741b92707f8e7cfbdb, type: 3}
+  m_Name: Attachment_S60
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.Attachments.AttachmentSO
+  attachmentId: 
+  displayName: S60
+  icon: {fileID: 0}
+  category: 5
+  visualPrefab: {fileID: 0}
+  recoilMultiplier: 1
+  spreadMultiplier: 1
+  adsSpeedMultiplier: 1
+  adsFOVOverride: 0
+  magazineTypeOverride: {fileID: 11400000, guid: 382c9330984929d4ea4a95d3a1750e27,
+    type: 2}
+  weightKg: 1.5
+  compatibleWeapons:
+  - {fileID: 11400000, guid: a9497db1c2e756c418a8567b32d82f17, type: 2}

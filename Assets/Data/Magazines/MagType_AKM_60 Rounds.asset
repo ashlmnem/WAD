@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
+  m_Name: MagType_AKM_60 Rounds
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazineTypeSO
+  magazineTypeId: 
+  displayName: S60
+  icon: {fileID: 0}
+  ammoType: {fileID: 11400000, guid: d41904a7c37dcb24d82aebbe05d09ada, type: 2}
+  baseCapacity: 60
+  emptyWeightKg: 1.5
+  groundModelPrefab: {fileID: 0}
