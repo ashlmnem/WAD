@@ -21,4 +21,6 @@ MonoBehaviour:
   tracerPrefab: {fileID: 899354151541854556, guid: a5964c83525ac3b429a9832b4847bef9,
     type: 3}
   impactVFXPrefab: {fileID: 0}
+  casingPrefab: {fileID: 5115788311629370093, guid: 199aa712af9af6d4191fb8b210e2037e,
+    type: 3}
   icon: {fileID: 21300000, guid: 773f4c094684b8747bd27b43c627c116, type: 3}

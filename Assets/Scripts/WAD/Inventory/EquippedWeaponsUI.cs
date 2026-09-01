@@ -2,13 +2,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using WAD.Weapons;
 
-namespace WAD.Inventory.UI
+namespace WAD.Inventory
 {
     /// <summary>
     /// Zeigt die ausgeruesteten Waffen (PlayerWeaponHolder.equippedWeapons) als
-    /// einfache Text-Liste im Inventar-Panel. Ergaenzt InventoryUIController,
-    /// welches nur die Rucksack-Items (stapelbares Loot) zeigt - Waffen sind
-    /// separat, da sie keine IInventoryItem-Stacks sind.
+    /// einfache Text-Liste im Inventar-Panel an.
     /// </summary>
     public class EquippedWeaponsUI : MonoBehaviour
     {
@@ -29,14 +27,20 @@ namespace WAD.Inventory.UI
             for (int i = 0; i < weaponHolder.equippedWeapons.Count; i++)
             {
                 var weapon = weaponHolder.equippedWeapons[i];
-                if (weapon.weaponData == null) continue;
+                if (weapon == null || weapon.weaponData == null) continue;
 
                 int current = weapon.loadedMagazine != null ? weapon.loadedMagazine.currentRounds : 0;
-                int capacity = weapon.weaponData.magazineCapacity;
+                // Kapazitaet kommt jetzt vom tatsaechlich geladenen Magazin (kann sich durch
+                // Attachments/Magazin-Typ-Wechsel von der Basis-Kapazitaet unterscheiden),
+                // Fallback auf den Standard-Magazintyp der Waffe falls nichts geladen ist.
+                int capacity = weapon.loadedMagazine != null
+                    ? weapon.loadedMagazine.capacity
+                    : (weapon.weaponData.DefaultMagazineType != null ? weapon.weaponData.DefaultMagazineType.baseCapacity : 0);
 
-                result += $"[{i + 1}] {weapon.weaponData.displayName}  ({current}/{capacity})\n";
+                result += $"[{i + 1}] {weapon.weaponData.displayName} ({current}/{capacity})\n";
             }
             weaponListText.text = result;
         }
     }
 }
+

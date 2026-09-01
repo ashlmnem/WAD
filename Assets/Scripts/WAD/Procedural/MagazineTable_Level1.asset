@@ -17,19 +17,23 @@ MonoBehaviour:
     weight: 10
     minFillPercent: 0
     maxFillPercent: 1
-  - magazineType: {fileID: 0}
+  - magazineType: {fileID: 11400000, guid: 495dd91e58dcf084fb79cec0187e8ef2, type: 2}
     weight: 9
     minFillPercent: 0
     maxFillPercent: 1
-  - magazineType: {fileID: 0}
+  - magazineType: {fileID: 11400000, guid: aced6e2fc13aa9147a5d8e167e7bd92f, type: 2}
     weight: 8
     minFillPercent: 0
     maxFillPercent: 1
-  - magazineType: {fileID: 0}
+  - magazineType: {fileID: 11400000, guid: 88ef50166e1279845b0383bb58b34ea4, type: 2}
     weight: 7
     minFillPercent: 0
     maxFillPercent: 1
-  - magazineType: {fileID: 0}
+  - magazineType: {fileID: 11400000, guid: a9f26d48ec5b9b1409f22b5439f1a77e, type: 2}
     weight: 5
+    minFillPercent: 0
+    maxFillPercent: 1
+  - magazineType: {fileID: 11400000, guid: 8e41702bbb8f9e54e8a4fcee22689937, type: 2}
+    weight: 3
     minFillPercent: 0
     maxFillPercent: 1

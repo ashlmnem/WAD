@@ -9,7 +9,7 @@ namespace WAD.Menu
     [System.Serializable]
     public class AttachmentSlotUIBinding
     {
-        [Tooltip("Muss exakt der 'Rail Id' auf dem Waffen-Prefab entsprechen, z.B. 'TopRail'")]
+        [Tooltip("Muss exakt der 'Rail Id' auf dem Waffen-Prefab entsprechen, z.B. 'UpperReceiverRail'")]
         public string railId;
         public AttachmentSO[] options;
         public Text label;
@@ -17,8 +17,7 @@ namespace WAD.Menu
 
     /// <summary>
     /// Steuert den Loadout-Bildschirm im Main Menu: Waffe + Attachments pro
-    /// Rail durchklicken, 3D-Vorschau aktualisiert sich live. Bei Bestaetigung
-    /// wird die Auswahl in WeaponLoadoutManager gespeichert.
+    /// Rail durchklicken, 3D-Vorschau aktualisiert sich live.
     /// </summary>
     public class LoadoutMenuController : MonoBehaviour
     {
@@ -28,7 +27,6 @@ namespace WAD.Menu
 
         [Header("3D-Vorschau")]
         public Transform previewPedestal;
-        [Tooltip("Waehle hier GENAU EINEN Layer aus (wie bei Culling Mask) - die Vorschau-Kamera sollte NUR diesen Layer rendern")]
         public LayerMask previewLayer;
         private GameObject currentPreviewInstance;
         private WeaponAttachmentManager previewAttachmentManager;
@@ -70,13 +68,14 @@ namespace WAD.Menu
             }
             else if (prefabToShow == null)
             {
-                Debug.LogWarning($"[LoadoutMenu] {weapon.displayName}: weder World Model Prefab noch Viewmodel Prefab gesetzt - keine 3D-Vorschau m glich.");
+                Debug.LogWarning($"[LoadoutMenu] {weapon.displayName}: weder World Model Prefab noch Viewmodel Prefab gesetzt - keine 3D-Vorschau möglich.");
             }
 
             if (weaponNameText != null) weaponNameText.text = weapon.displayName;
             if (weaponStatsText != null)
             {
-                weaponStatsText.text = $"RPM: {weapon.roundsPerMinute}   Magazin: {weapon.magazineCapacity}   Gewicht: {weapon.weightKg:F1}kg";
+                int magCapacity = weapon.DefaultMagazineType != null ? weapon.DefaultMagazineType.baseCapacity : 0;
+                weaponStatsText.text = $"RPM: {weapon.roundsPerMinute} Magazin: {magCapacity} Gewicht: {weapon.weightKg:F1}kg";
             }
 
             if (WeaponLoadoutManager.Instance != null && previewAttachmentManager != null)
@@ -92,7 +91,7 @@ namespace WAD.Menu
                 }
             }
         }
-        // ---- Attachment-Wechsel pro Rail ----
+
         public void CycleAttachment(string railId, int direction)
         {
             var binding = attachmentSlotBindings.Find(b => b.railId == railId);
@@ -113,7 +112,7 @@ namespace WAD.Menu
             }
 
             WeaponSO currentWeapon = availableWeapons[currentWeaponIndex];
-            List<AttachmentSO> compatible = new List<AttachmentSO> { null }; // "kein Attachment"
+            List<AttachmentSO> compatible = new List<AttachmentSO> { null };
             foreach (var option in binding.options)
             {
                 if (option.IsCompatibleWith(currentWeapon)) compatible.Add(option);
@@ -162,7 +161,6 @@ namespace WAD.Menu
             binding.label.text = current != null ? current.displayName : "-- leer --";
         }
 
-        // ---- Wrapper fuer Button-OnClick() (max. 1 Parameter im Inspector moeglich) ----
         public void CycleUpperReceiverRail(int direction) => CycleAttachment("UpperReceiverRail", direction);
         public void CycleMuzzlePoint(int direction) => CycleAttachment("MuzzlePoint", direction);
         public void CycleStockPoint(int direction) => CycleAttachment("StockPoint", direction);
@@ -170,7 +168,6 @@ namespace WAD.Menu
         public void CycleHandguardLowerRail(int direction) => CycleAttachment("HandguardLowerRail", direction);
         public void CycleHandguardUpperRail(int direction) => CycleAttachment("HandguardUpperRail", direction);
 
-        // ---- Bestaetigen ----
         public void ConfirmSelection()
         {
             if (WeaponLoadoutManager.Instance == null) return;
@@ -179,3 +176,4 @@ namespace WAD.Menu
         }
     }
 }
+

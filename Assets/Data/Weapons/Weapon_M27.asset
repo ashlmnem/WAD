@@ -21,8 +21,9 @@ MonoBehaviour:
   fireMode: 0
   roundsPerMinute: 1200
   boltActionCycleTime: 0
-  magazineCapacity: 15
-  compatibleAmmoType: {fileID: 11400000, guid: 0dbd39db52e015d4f921a8f9c7e8cfa8, type: 2}
+  compatibleMagazineTypes:
+  - {fileID: 11400000, guid: 88db3fcfbc00aa646811f1b5a6d0255a, type: 2}
+  - {fileID: 11400000, guid: 88ef50166e1279845b0383bb58b34ea4, type: 2}
   reloadTimeSeconds: 2.2
   requiresChamberAfterReload: 0
   baseSpreadDegrees: 0.1
@@ -56,11 +57,9 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   weightKg: 0.7
+  adsFOV: 60
+  adsTransitionSpeed: 8
   muzzleFlashPrefab: {fileID: 0}
   fireSound: {fileID: 8300000, guid: 2eef5762eed00c141a2e4fe7313d9ad0, type: 3}
   dryFireSound: {fileID: 8300000, guid: 614ee563efc665741bd3274fda6bd181, type: 3}
   reloadSound: {fileID: 8300000, guid: 6646ebed2b146ac4086f71bc1aacc60b, type: 3}
-  magazineGroundModelPrefab: {fileID: 1426944496053297161, guid: b6ebf838a73e96149a6fb1e699657df8,
-    type: 3}
-  adsFOV: 60
-  adsTransitionSpeed: 8

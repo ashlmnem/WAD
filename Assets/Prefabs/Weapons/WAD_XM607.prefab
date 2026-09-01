@@ -93,6 +93,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5348290688732449234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5730627015918259095
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2722358745794569984}
+  m_Layer: 0
+  m_Name: EjectionPort
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2722358745794569984
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5730627015918259095}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.03291452, y: 0.7063404, z: -0.7063404, w: -0.03291452}
+  m_LocalPosition: {x: 0.00000004660809, y: -0.03899999, z: 0.36700112}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5348290688732449234}
+  m_LocalEulerAnglesHint: {x: 90, y: 180, z: -5.3359985}
 --- !u!1 &6427033039209197223
 GameObject:
   m_ObjectHideFlags: 0
@@ -179,8 +210,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8715184401141625318}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00000008940697, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.0049, y: -0.4405, z: 0.846}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.004899996, y: -0.44050053, z: 0.8460008}
   m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -212,17 +243,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0
+      value: -0.0012783295
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 0.007028062
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 0.009723008
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
@@ -302,6 +333,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: 7887813125651971903}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2722358745794569984}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
@@ -319,6 +354,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: -5763808023867022172}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2231849544373353776}
   m_SourcePrefab: {fileID: 100100000, guid: 6141d578a2ae789488e6ef7d95c7a5c4, type: 3}
 --- !u!1 &4716151335909397352 stripped
 GameObject:
@@ -344,13 +383,12 @@ MonoBehaviour:
   movementController: {fileID: 0}
   attachments: {fileID: 1295093216018247859}
   playerLean: {fileID: 0}
+  casingEjector: {fileID: 2231849544373353776}
   loadedMagazine:
-    ammoType: {fileID: 11400000, guid: 3e917ed2de90b464d9a9af981a87b4d7, type: 2}
-    capacity: 20
+    magazineType: {fileID: 11400000, guid: 8e41702bbb8f9e54e8a4fcee22689937, type: 2}
     currentRounds: 20
   reserveMagazines:
-  - ammoType: {fileID: 11400000, guid: 3e917ed2de90b464d9a9af981a87b4d7, type: 2}
-    capacity: 20
+  - magazineType: {fileID: 11400000, guid: 8e41702bbb8f9e54e8a4fcee22689937, type: 2}
     currentRounds: 20
   hittableLayers:
     serializedVersion: 2
@@ -369,6 +407,8 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 5348290688732449234}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  defaultIronSightAimPoint: {fileID: 0}
+  adsPositionLerpSpeed: 10
 --- !u!114 &6678873023715160492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -423,8 +463,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazinesCreator
   cheat_magazine_bind: 287
-  capacity: 15
+  overrideMagazineType: {fileID: 11400000, guid: 8e41702bbb8f9e54e8a4fcee22689937,
+    type: 2}
   currentRounds: -1
+--- !u!114 &2231849544373353776
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4716151335909397352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfb5076aeb78b0a4cab0a4f5bf306387, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.Casings.ShellCasingEjector
+  ejectionPort: {fileID: 2722358745794569984}
+  ejectForceMin: 1.3
+  ejectForceMax: 2.2
+  upwardForceMultiplier: 1
+  backwardForceMultiplier: 0.3
+  torqueStrength: 6
+  destroyAfterSeconds: 10
 --- !u!4 &5348290688732449234 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,

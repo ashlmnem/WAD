@@ -217,6 +217,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5151953224896839226}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8563561163979889089
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7879096401566363621}
+  m_Layer: 0
+  m_Name: EjectionPort
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7879096401566363621
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8563561163979889089}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: -0.03, y: -1.4819998, z: 0.738}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5151953224896839226}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
 --- !u!1001 &4680879745785272785
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -312,30 +343,34 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 0
-      addedObject: {fileID: 2909732865255725730}
+      addedObject: {fileID: 7879096401566363621}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 1
-      addedObject: {fileID: 2412116050168667523}
+      addedObject: {fileID: 2909732865255725730}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 2
-      addedObject: {fileID: 8704360457308617133}
+      addedObject: {fileID: 2412116050168667523}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 3
-      addedObject: {fileID: 407899136780848489}
+      addedObject: {fileID: 8704360457308617133}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 4
-      addedObject: {fileID: 6197133060634269059}
+      addedObject: {fileID: 407899136780848489}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 5
-      addedObject: {fileID: 5882870866945843992}
+      addedObject: {fileID: 6197133060634269059}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
         type: 3}
       insertIndex: 6
+      addedObject: {fileID: 5882870866945843992}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: a8083857490b8654383f1ac434a8d3ff,
+        type: 3}
+      insertIndex: 7
       addedObject: {fileID: 8260812752963204545}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8083857490b8654383f1ac434a8d3ff,
@@ -362,6 +397,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: -1674216557120460091}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a8083857490b8654383f1ac434a8d3ff,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3980092131386318992}
   m_SourcePrefab: {fileID: 100100000, guid: a8083857490b8654383f1ac434a8d3ff, type: 3}
 --- !u!4 &5151953224896839226 stripped
 Transform:
@@ -424,13 +463,12 @@ MonoBehaviour:
   movementController: {fileID: 0}
   attachments: {fileID: 5790911212689201350}
   playerLean: {fileID: 0}
+  casingEjector: {fileID: 3980092131386318992}
   loadedMagazine:
-    ammoType: {fileID: 11400000, guid: f0768dbce2fda9e49902f8e6e62b53e9, type: 2}
-    capacity: 20
+    magazineType: {fileID: 11400000, guid: aced6e2fc13aa9147a5d8e167e7bd92f, type: 2}
     currentRounds: 20
   reserveMagazines:
-  - ammoType: {fileID: 11400000, guid: f0768dbce2fda9e49902f8e6e62b53e9, type: 2}
-    capacity: 20
+  - magazineType: {fileID: 11400000, guid: aced6e2fc13aa9147a5d8e167e7bd92f, type: 2}
     currentRounds: 20
   hittableLayers:
     serializedVersion: 2
@@ -449,6 +487,8 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 0}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  defaultIronSightAimPoint: {fileID: 0}
+  adsPositionLerpSpeed: 10
 --- !u!114 &-8974979052817051919
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -594,5 +634,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazinesCreator
   cheat_magazine_bind: 287
-  capacity: 15
+  overrideMagazineType: {fileID: 11400000, guid: aced6e2fc13aa9147a5d8e167e7bd92f,
+    type: 2}
   currentRounds: -1
+--- !u!114 &3980092131386318992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5491218930222965888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bfb5076aeb78b0a4cab0a4f5bf306387, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.Casings.ShellCasingEjector
+  ejectionPort: {fileID: 7879096401566363621}
+  ejectForceMin: 1.3
+  ejectForceMax: 2.2
+  upwardForceMultiplier: 1
+  backwardForceMultiplier: 0.3
+  torqueStrength: 6
+  destroyAfterSeconds: 10
