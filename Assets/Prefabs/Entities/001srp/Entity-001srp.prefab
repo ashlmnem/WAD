@@ -146,9 +146,9 @@ MonoBehaviour:
   movementController: {fileID: 0}
   attachments: {fileID: 0}
   playerLean: {fileID: 0}
+  casingEjector: {fileID: 0}
   loadedMagazine:
-    ammoType: {fileID: 11400000, guid: f8e3ef8cdd9baea4bab76a9b7f6b554f, type: 2}
-    capacity: 1
+    magazineType: {fileID: 11400000, guid: 00f737d0c1f43ca498d88a7f2d5309f5, type: 2}
     currentRounds: 1
   reserveMagazines: []
   hittableLayers:
@@ -168,3 +168,5 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 0}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  defaultIronSightAimPoint: {fileID: 0}
+  adsPositionLerpSpeed: 10
