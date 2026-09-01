@@ -633,12 +633,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.Casings.ShellCasingEjector
   ejectionPort: {fileID: 2602894519497938136}
-  ejectForceMin: 1.3
-  ejectForceMax: 2.2
+  ejectForceMin: 5
+  ejectForceMax: 15
   upwardForceMultiplier: 1
   backwardForceMultiplier: 0.3
   torqueStrength: 6
-  destroyAfterSeconds: 10
+  destroyAfterSeconds: 5
 --- !u!4 &4550026382032229802 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,

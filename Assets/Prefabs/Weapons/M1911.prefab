@@ -118,7 +118,7 @@ Transform:
   m_GameObject: {fileID: 5565452519628624390}
   serializedVersion: 2
   m_LocalRotation: {x: 0.703254, y: -0.07371537, z: 0.07371536, w: 0.70325387}
-  m_LocalPosition: {x: 0.02, y: 1.078, z: 1.37}
+  m_LocalPosition: {x: 1.234, y: 1.078, z: 1.626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -471,9 +471,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.Casings.ShellCasingEjector
   ejectionPort: {fileID: 7145390581696896290}
-  ejectForceMin: 1.3
-  ejectForceMax: 2.2
-  upwardForceMultiplier: 1
+  ejectForceMin: 5
+  ejectForceMax: 15
+  upwardForceMultiplier: 0.01
   backwardForceMultiplier: 0.3
   torqueStrength: 6
   destroyAfterSeconds: 10
