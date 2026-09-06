@@ -186,6 +186,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5348290688732449234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8516409724758677282
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8596952377058541985}
+  m_Layer: 0
+  m_Name: IronSightAimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8596952377058541985
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8516409724758677282}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.00000008940697, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.003, y: -2.145, z: 0.884}
+  m_LocalScale: {x: 2.5, y: 2.4999995, z: 2.4999995}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5348290688732449234}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8715184401141625318
 GameObject:
   m_ObjectHideFlags: 0
@@ -312,10 +343,14 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
       insertIndex: 0
-      addedObject: {fileID: 5784183870871206332}
+      addedObject: {fileID: 8596952377058541985}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
       insertIndex: 1
+      addedObject: {fileID: 5784183870871206332}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
+        type: 3}
+      insertIndex: 2
       addedObject: {fileID: 5967095325677710825}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
@@ -407,7 +442,7 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 5348290688732449234}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
-  defaultIronSightAimPoint: {fileID: 0}
+  defaultIronSightAimPoint: {fileID: 8596952377058541985}
   adsPositionLerpSpeed: 10
 --- !u!114 &6678873023715160492
 MonoBehaviour:

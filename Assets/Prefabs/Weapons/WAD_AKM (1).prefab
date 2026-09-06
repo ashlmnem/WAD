@@ -248,6 +248,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5531897182492058077}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6732054113964569505
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8177152251706099495}
+  m_Layer: 0
+  m_Name: IronSightAimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8177152251706099495
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6732054113964569505}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.005, y: -0.096, z: 1.903}
+  m_LocalScale: {x: 7.1428566, y: 7.1428576, z: 7.1428576}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5531897182492058077}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &5426703757898483254
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -347,6 +378,10 @@ PrefabInstance:
     - {fileID: -4636300777304409883, guid: 8de612af89a9c274aae7ad04e5e40da1, type: 3}
     - {fileID: -7136622550182105865, guid: 8de612af89a9c274aae7ad04e5e40da1, type: 3}
     m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8de612af89a9c274aae7ad04e5e40da1,
+        type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 8177152251706099495}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 8de612af89a9c274aae7ad04e5e40da1,
         type: 3}
       insertIndex: -1
@@ -457,7 +492,7 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 0}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
-  defaultIronSightAimPoint: {fileID: 0}
+  defaultIronSightAimPoint: {fileID: 8177152251706099495}
   adsPositionLerpSpeed: 10
 --- !u!114 &5816663751995080935
 MonoBehaviour:

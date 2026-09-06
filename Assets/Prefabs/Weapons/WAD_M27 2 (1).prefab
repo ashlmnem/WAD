@@ -57,7 +57,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0.20801158, y: -0.6758189, z: 0.6758189, w: 0.20801158}
   m_LocalPosition: {x: 0.00008965589, y: -0.013821236, z: 0.0069001657}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4550026382032229802}
@@ -155,6 +155,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4550026382032229802}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8401086488812940137
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 896639716400002485}
+  m_Layer: 0
+  m_Name: IronSightAimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &896639716400002485
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8401086488812940137}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: -0.04198, z: 0.01006}
+  m_LocalScale: {x: 0.033333335, y: 0.033333324, z: 0.033333324}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4550026382032229802}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8615168416828380454
 GameObject:
   m_ObjectHideFlags: 0
@@ -197,17 +228,17 @@ PrefabInstance:
     - target: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       propertyPath: m_LocalScale.x
-      value: 30
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       propertyPath: m_LocalScale.y
-      value: 30
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       propertyPath: m_LocalScale.z
-      value: 30
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
@@ -271,18 +302,22 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       insertIndex: 0
-      addedObject: {fileID: 7689833170190033362}
+      addedObject: {fileID: 896639716400002485}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       insertIndex: 1
-      addedObject: {fileID: 2408178096290421558}
+      addedObject: {fileID: 7689833170190033362}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       insertIndex: 2
-      addedObject: {fileID: 2620140083987278288}
+      addedObject: {fileID: 2408178096290421558}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
       insertIndex: 3
+      addedObject: {fileID: 2620140083987278288}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
+        type: 3}
+      insertIndex: 4
       addedObject: {fileID: 3076664148668342609}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: d72087b22f586e146a50033e574bda9c,
         type: 3}
@@ -467,7 +502,7 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 0}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
-  defaultIronSightAimPoint: {fileID: 0}
+  defaultIronSightAimPoint: {fileID: 896639716400002485}
   adsPositionLerpSpeed: 10
 --- !u!114 &-2799797116499017900
 MonoBehaviour:

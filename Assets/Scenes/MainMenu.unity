@@ -3818,6 +3818,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 54b1028a243bdc045ac8b545f6806827, type: 2}
   - {fileID: 11400000, guid: b4141dcbe66604547925759329d56d5a, type: 2}
   - {fileID: 11400000, guid: f94035515c0995f41b03e13f1175c67d, type: 2}
+  - {fileID: 11400000, guid: 6101d4e37b5adb8458bc5838bb472a54, type: 2}
   previewPedestal: {fileID: 1081145169}
   previewLayer:
     serializedVersion: 2

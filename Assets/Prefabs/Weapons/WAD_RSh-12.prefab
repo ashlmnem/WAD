@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &881167732875956875
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9016824148861381940}
+  m_Layer: 0
+  m_Name: IronSightAimPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9016824148861381940
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 881167732875956875}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.008, y: -2.38, z: 1.468}
+  m_LocalScale: {x: 5, y: 5, z: 5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4394512289086810679}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1011418265212589658
 GameObject:
   m_ObjectHideFlags: 0
@@ -314,6 +345,10 @@ PrefabInstance:
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6b4f4a8bf748c414c9e2596895e3db49,
         type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 9016824148861381940}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6b4f4a8bf748c414c9e2596895e3db49,
+        type: 3}
       insertIndex: -1
       addedObject: {fileID: 4589474902746719894}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6b4f4a8bf748c414c9e2596895e3db49,
@@ -386,13 +421,12 @@ MonoBehaviour:
   movementController: {fileID: 0}
   attachments: {fileID: 0}
   playerLean: {fileID: 0}
+  casingEjector: {fileID: 0}
   loadedMagazine:
-    ammoType: {fileID: 11400000, guid: ae9b22057d155c347ae1dafed5dfbe42, type: 2}
-    capacity: 6
+    magazineType: {fileID: 0}
     currentRounds: 6
   reserveMagazines:
-  - ammoType: {fileID: 11400000, guid: ae9b22057d155c347ae1dafed5dfbe42, type: 2}
-    capacity: 6
+  - magazineType: {fileID: 0}
     currentRounds: 6
   hittableLayers:
     serializedVersion: 2
@@ -411,6 +445,8 @@ MonoBehaviour:
   nearMissDetectionRadius: 0.6
   modelRoot: {fileID: 0}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
+  defaultIronSightAimPoint: {fileID: 9016824148861381940}
+  adsPositionLerpSpeed: 10
 --- !u!114 &6925589779168489409
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -584,7 +620,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazinesCreator
   cheat_magazine_bind: 287
-  capacity: 15
+  overrideMagazineType: {fileID: 0}
   currentRounds: -1
 --- !u!4 &4394512289086810679 stripped
 Transform:

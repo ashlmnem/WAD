@@ -83,7 +83,6 @@ namespace WAD.Weapons.Attachments
             return 0f;
         }
 
-        /// <summary> Aktives Magazin-Attachment (z.B. Trommelmagazin) - null wenn keins montiert (Punkt 8). </summary>
         public MagazineTypeSO GetMagazineTypeOverride()
         {
             foreach (var a in equippedByRail.Values)
@@ -92,12 +91,20 @@ namespace WAD.Weapons.Attachments
             }
             return null;
         }
-        /// <summary> Findet den "ADS_AimPoint"-Kindpunkt der aktuell montierten Optik, falls vorhanden (Punkt 10/11). </summary>
+
+        /// <summary>
+        /// Findet den "ADS_AimPoint"-Kindpunkt der aktuell montierten Optik.
+        /// Gibt sauber NULL zurueck (statt zu crashen), wenn keine Optik
+        /// montiert ist - das war der Bug, der Fire/Inspect blockiert hat.
+        /// </summary>
         public Transform GetOpticAimPoint()
         {
-            if (!spawnedVisuals.TryGetValue(FindOpticRailId(), out var visual) || visual == null) return null;
-            var aimPoint = visual.transform.Find("ADS_AimPoint");
-            return aimPoint;
+            string opticRailId = FindOpticRailId();
+            if (opticRailId == null) return null; // keine Optik montiert - kein Fehler, einfach kein Aim Point
+
+            if (!spawnedVisuals.TryGetValue(opticRailId, out var visual) || visual == null) return null;
+
+            return visual.transform.Find("ADS_AimPoint");
         }
 
         private string FindOpticRailId()
