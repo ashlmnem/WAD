@@ -20,7 +20,7 @@ MonoBehaviour:
     type: 3}
   fireMode: 0
   roundsPerMinute: 1200
-  boltActionCycleTime: 1.2
+  boltActionCycleTime: 0
   compatibleMagazineTypes:
   - {fileID: 11400000, guid: a9f26d48ec5b9b1409f22b5439f1a77e, type: 2}
   reloadTimeSeconds: 2.2
