@@ -187,18 +187,6 @@ GameObject:
     type: 3}
   m_PrefabInstance: {fileID: 2667189547527433045}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &220426625 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3928932649107414096, guid: be30d8424fc75d64eb9365f8f5f4756a,
-    type: 3}
-  m_PrefabInstance: {fileID: 2667189547527433045}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 220426624}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c7fd3cf25f60ff548bbf0e2eff94c234, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &220426631
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -212,8 +200,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazinesCreator
   cheat_magazine_bind: 287
-  weapon: {fileID: 220426625}
-  capacity: 15
+  overrideMagazineType: {fileID: 0}
   currentRounds: -1
 --- !u!1001 &250798061
 PrefabInstance:
@@ -848,6 +835,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 724120849}
+  - component: {fileID: 724120850}
   m_Layer: 0
   m_Name: ExtractionDecisionUI
   m_TagString: Untagged
@@ -870,6 +858,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &724120850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 724120848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d520b1a13740a874388363e710267e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Core.ExtractionDecisionUI
 --- !u!114 &762444044 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2603965611756599935, guid: a965188259e1307429dfebe4f8b36386,
@@ -926,6 +926,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 29f85555d0b2e0847bd24af2af77cc96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Cheats.CheatManager
+  are_cheats_enabled_by_default: 0
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -1089,6 +1090,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1184787971}
   - component: {fileID: 1184787972}
+  - component: {fileID: 1184787973}
   m_Layer: 0
   m_Name: RunStateManager
   m_TagString: Untagged
@@ -1127,6 +1129,21 @@ MonoBehaviour:
   levelsSurvivedThisRun: 0
   carriedItems: []
   jetFuel: 0
+--- !u!114 &1184787973
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1184787970}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d364626728faf7e4c941a148d2017cdd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneStartTrigger
+  start_on_scene_loaded: 1
+  cutscene_director: {fileID: 1161286179}
+  additional_events_before_cutscene: []
 --- !u!1 &1185495347
 GameObject:
   m_ObjectHideFlags: 0
@@ -1898,7 +1915,7 @@ PrefabInstance:
     - target: {fileID: 6946050246052022357, guid: a965188259e1307429dfebe4f8b36386,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -0.00097280595
+      value: 0.000024632858
       objectReference: {fileID: 0}
     - target: {fileID: 8576122408225319014, guid: a965188259e1307429dfebe4f8b36386,
         type: 3}
