@@ -35,9 +35,24 @@ namespace WAD.Weapons.Attachments
                 return false;
             }
 
-            RemoveAttachment(railId);
+            // Waffen-Kompatibilitaet pruefen (falls im Attachment eingeschraenkt)
+            if (attachment != null)
+            {
+                var weapon = GetComponent<WeaponController>();
+                if (weapon != null && weapon.weaponData != null && !attachment.IsCompatibleWith(weapon.weaponData))
+                {
+                    Debug.LogWarning($"[WeaponAttachmentManager:{gameObject.name}] '{attachment.displayName}' ist nicht kompatibel mit '{weapon.weaponData.displayName}'.");
+                    return false;
+                }
+            }
 
-            if (attachment == null) return true;
+            RemoveAttachmentInternal(railId);
+
+            if (attachment == null)
+            {
+                OnAttachmentsChanged?.Invoke();
+                return true;
+            }
 
             equippedByRail[railId] = attachment;
 
@@ -46,6 +61,13 @@ namespace WAD.Weapons.Attachments
                 Vector3 pos = rail.mountTransform != null ? rail.mountTransform.position : transform.position;
                 Quaternion rot = rail.mountTransform != null ? rail.mountTransform.rotation : transform.rotation;
                 Transform parent = rail.mountTransform != null ? rail.mountTransform : transform;
+
+                if (rail.mountTransform == null)
+                {
+                    Debug.LogWarning($"[WeaponAttachmentManager:{gameObject.name}] Rail '{railId}' hat kein Mount Transform - " +
+                                     $"'{attachment.displayName}' wird an der Waffenwurzel befestigt und sitzt dadurch vermutlich falsch. " +
+                                     "Bitte im Waffen-Prefab einen Befestigungspunkt zuweisen.");
+                }
 
                 GameObject visual = Instantiate(attachment.visualPrefab, pos, rot, parent);
                 spawnedVisuals[railId] = visual;
@@ -61,13 +83,24 @@ namespace WAD.Weapons.Attachments
 
         public void RemoveAttachment(string railId)
         {
+            RemoveAttachmentInternal(railId);
+            OnAttachmentsChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Entfernt ein Attachment OHNE das Changed-Event auszuloesen.
+        /// Wird intern benutzt, damit ein Wechsel das Event nur EINMAL feuert -
+        /// vorher lief WeaponController.ApplyMagazineTypeOverride zweimal und
+        /// konnte dabei Patronen verlieren.
+        /// </summary>
+        private void RemoveAttachmentInternal(string railId)
+        {
             if (spawnedVisuals.TryGetValue(railId, out var visual) && visual != null)
             {
                 Destroy(visual);
             }
             spawnedVisuals.Remove(railId);
             equippedByRail.Remove(railId);
-            OnAttachmentsChanged?.Invoke();
         }
 
         public float GetRecoilMultiplier() => Aggregate(a => a.recoilMultiplier);
@@ -93,9 +126,16 @@ namespace WAD.Weapons.Attachments
         }
 
         /// <summary>
-        /// Findet den "ADS_AimPoint"-Kindpunkt der aktuell montierten Optik.
-        /// Gibt sauber NULL zurueck (statt zu crashen), wenn keine Optik
-        /// montiert ist - das war der Bug, der Fire/Inspect blockiert hat.
+        /// Findet den "ADS_AimPoint" der aktuell montierten Optik - auch wenn er
+        /// TIEFER in der Optik-Hierarchie liegt.
+        ///
+        /// WICHTIG: Die Optik-Prefabs sind selbst Prefab-Instanzen (z.B. T-1 mit
+        /// Riser). Deren Wurzel-Transform ist beim Instanziieren "stripped",
+        /// wodurch das eigentliche Optik-Modell eine Ebene UNTER dem Visual-Root
+        /// liegt und "ADS_AimPoint" erst in der zweiten Ebene haengt.
+        /// Transform.Find() sucht nur DIREKTE Kinder und lieferte deshalb NULL -
+        /// die Waffe fiel auf die offene Visierung zurueck und man zielte durch
+        /// Kimme/Korn statt durch die Optik.
         /// </summary>
         public Transform GetOpticAimPoint()
         {
@@ -104,7 +144,30 @@ namespace WAD.Weapons.Attachments
 
             if (!spawnedVisuals.TryGetValue(opticRailId, out var visual) || visual == null) return null;
 
-            return visual.transform.Find("ADS_AimPoint");
+            Transform aimPoint = FindDescendant(visual.transform, "ADS_AimPoint");
+
+            if (aimPoint == null)
+            {
+                GameObject prefab = equippedByRail.TryGetValue(opticRailId, out var so) ? (so != null ? so.visualPrefab : null) : null;
+                Debug.LogWarning($"[WeaponAttachmentManager:{gameObject.name}] Optik '{(prefab != null ? prefab.name : opticRailId)}' hat keinen Kindpunkt 'ADS_AimPoint' - " +
+                                 "ADS richtet sich weiter an der offenen Visierung aus. Bitte im Optik-Prefab einen Punkt mit exakt diesem Namen anlegen.");
+            }
+
+            return aimPoint;
+        }
+
+        /// <summary> Rekursive Suche nach einem Kindpunkt (Transform.Find sucht nur direkte Kinder). </summary>
+        private static Transform FindDescendant(Transform root, string name)
+        {
+            if (root == null) return null;
+            if (root.name == name) return root;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform found = FindDescendant(root.GetChild(i), name);
+                if (found != null) return found;
+            }
+            return null;
         }
 
         private string FindOpticRailId()

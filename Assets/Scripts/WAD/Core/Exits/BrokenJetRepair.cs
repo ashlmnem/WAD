@@ -41,6 +41,7 @@ namespace WAD.Levels
         public void Interact(PlayerInteraction interactor)
         {
             if (isLaunching) return;
+            if (interactor == null) return;
 
             if (!IsRepaired)
             {
@@ -118,28 +119,41 @@ namespace WAD.Levels
 
             var movement = interactor.GetComponent<TarkovMovementController>();
             var look = interactor.GetComponentInChildren<FirstPersonCameraLook>();
+            var characterController = interactor.GetComponent<CharacterController>();
+
             if (movement != null) movement.enabled = false;
             if (look != null) look.enabled = false;
+            // Der CharacterController ueberschreibt direkte Transform-Aenderungen
+            // beim naechsten Move() wieder - waehrend des Steigflugs abschalten.
+            if (characterController != null) characterController.enabled = false;
 
             Transform player = interactor.transform;
             Vector3 start = player.position;
             float requiredAltitude = altitudeExit != null ? altitudeExit.requiredAltitudeMeters : 2500f;
             float targetY = start.y + requiredAltitude + altitudeBuffer;
 
-            float elapsed = 0f;
-            while (elapsed < climbDurationSeconds)
+            try
             {
-                elapsed += Time.deltaTime;
-                float t = elapsed / climbDurationSeconds;
-                // Sanfte Beschleunigung/Verzoegerung statt linearem Steigflug
-                float smoothT = Mathf.SmoothStep(0f, 1f, t);
-                player.position = new Vector3(start.x, Mathf.Lerp(start.y, targetY, smoothT), start.z);
-                yield return null;
+                float elapsed = 0f;
+                while (elapsed < climbDurationSeconds)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = elapsed / climbDurationSeconds;
+                    // Sanfte Beschleunigung/Verzoegerung statt linearem Steigflug
+                    float smoothT = Mathf.SmoothStep(0f, 1f, t);
+                    player.position = new Vector3(start.x, Mathf.Lerp(start.y, targetY, smoothT), start.z);
+                    yield return null;
+                }
             }
-
-            // LevelExitController prueft AltitudeExit.CheckAltitude() bereits jeden
-            // Frame selbststaendig - sobald die Hoehe erreicht ist, loest der Exit
-            // automatisch aus. Hier ist kein manueller Trigger noetig.
+            finally
+            {
+                // Ohne dieses Aufraeumen blieben Bewegung und Kamera des Spielers
+                // dauerhaft deaktiviert - auch wenn die Coroutine abgebrochen wird.
+                if (characterController != null) characterController.enabled = true;
+                if (movement != null) movement.enabled = true;
+                if (look != null) look.enabled = true;
+                isLaunching = false;
+            }
         }
     }
 }

@@ -40,17 +40,41 @@ namespace WAD.Menu
 
         private void Start()
         {
+            if (availableWeapons == null || availableWeapons.Length == 0)
+            {
+                Debug.LogWarning("[LoadoutMenu] 'Available Weapons' ist leer - das Loadout-Menue kann nichts anzeigen.");
+                return;
+            }
+
             ShowWeapon(0);
         }
 
-        public void NextWeapon() => ShowWeapon((currentWeaponIndex + 1) % availableWeapons.Length);
-        public void PreviousWeapon() => ShowWeapon((currentWeaponIndex - 1 + availableWeapons.Length) % availableWeapons.Length);
+        // Die beiden Buttons rufen diese Methoden direkt auf. Ohne die
+        // Laengen-Pruefung wirft '% availableWeapons.Length' eine
+        // DivideByZeroException (bzw. NullReferenceException bei null), BEVOR
+        // ShowWeapon seinen eigenen Guard erreicht.
+        public void NextWeapon()
+        {
+            if (availableWeapons == null || availableWeapons.Length == 0) return;
+            ShowWeapon((currentWeaponIndex + 1) % availableWeapons.Length);
+        }
+
+        public void PreviousWeapon()
+        {
+            if (availableWeapons == null || availableWeapons.Length == 0) return;
+            ShowWeapon((currentWeaponIndex - 1 + availableWeapons.Length) % availableWeapons.Length);
+        }
 
         private void ShowWeapon(int index)
         {
             if (availableWeapons == null || availableWeapons.Length == 0) return;
             currentWeaponIndex = index;
             WeaponSO weapon = availableWeapons[currentWeaponIndex];
+            if (weapon == null)
+            {
+                Debug.LogWarning($"[LoadoutMenu] Leerer Eintrag in 'Available Weapons' an Index {currentWeaponIndex}.");
+                return;
+            }
 
             if (currentPreviewInstance != null) Destroy(currentPreviewInstance);
 

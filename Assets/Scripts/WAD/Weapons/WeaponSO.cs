@@ -32,7 +32,27 @@ namespace WAD.Weapons
         public List<MagazineTypeSO> compatibleMagazineTypes = new List<MagazineTypeSO>();
         public MagazineTypeSO DefaultMagazineType => compatibleMagazineTypes.Count > 0 ? compatibleMagazineTypes[0] : null;
 
-        public bool AcceptsMagazine(MagazineTypeSO type) => type != null && compatibleMagazineTypes.Contains(type);
+        /// <summary>
+        /// Nimmt diese Waffe das Magazin an?
+        /// Zuerst die explizite Liste (Sonderfaelle wie geteilte Magazine),
+        /// danach das Kaliber - so funktionieren neue Magazin-Typen
+        /// (Trommel, Kurz, Lang) automatisch, ohne sie hier einzutragen.
+        /// </summary>
+        public bool AcceptsMagazine(MagazineTypeSO type)
+        {
+            if (type == null) return false;
+            if (compatibleMagazineTypes.Contains(type)) return true;
+
+            // Kaliber-Abgleich: gleiches AmmoTypeSO = kompatibel
+            foreach (var compatible in compatibleMagazineTypes)
+            {
+                if (compatible != null && compatible.ammoType != null && compatible.ammoType == type.ammoType)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         [Header("Nachladen")]
         public float reloadTimeSeconds = 2.2f;

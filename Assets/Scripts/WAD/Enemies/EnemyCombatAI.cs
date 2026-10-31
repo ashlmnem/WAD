@@ -52,10 +52,30 @@ namespace WAD.Enemies
             agent = GetComponent<NavMeshAgent>();
         }
 
+        private void OnEnable()
+        {
+            // Beim Wiederaktivieren (z.B. gegner aus dem Pool) sauber starten,
+            // sonst haelt ein alter Zeitstempel den Gegner in SuppressiveFire.
+            timeWithoutSight = 0f;
+            subState = CombatSubState.Advancing;
+        }
+
         private void Update()
         {
             if (!enemy.useCoverAI) return;
-            if (enemy.CurrentState != EnemyState.Attack && enemy.CurrentState != EnemyState.Chase) return;
+
+            // Beim Verlassen des Kampfes Zustand zuruecksetzen (vorher lief der
+            // 'timeWithoutSight'-Zaehler unbegrenzt weiter, weil Update frueh
+            // ausgestiegen ist - der Gegner ging beim naechsten Sichtverlust
+            // sofort in SuppressiveFire).
+            if (enemy.CurrentState != EnemyState.Attack && enemy.CurrentState != EnemyState.Chase)
+            {
+                if (currentCover != null) { currentCover.occupiedBy = null; currentCover = null; }
+                subState = CombatSubState.Advancing;
+                timeWithoutSight = 0f;
+                return;
+            }
+
             if (enemy.PlayerTransform == null) return;
 
             bool hasSight = HasLineOfSightToPlayer();
@@ -110,15 +130,38 @@ namespace WAD.Enemies
         private void TryMoveToNewCover()
         {
             CoverPoint best = FindNearestFreeCover();
-            if (best == null) return;
+            if (best == null)
+            {
+                // Zeitstempel trotzdem setzen - sonst laeuft die OverlapSphere-
+                // Abfrage JEDEN Frame, wenn keine Deckung in Reichweite ist.
+                nextCoverSwitchTime = Time.time + Random.Range(minTimeInCover, maxTimeInCover);
+                return;
+            }
 
             if (currentCover != null) currentCover.occupiedBy = null;
 
             currentCover = best;
             currentCover.occupiedBy = enemy;
-            agent.SetDestination(currentCover.transform.position);
+            SetDestinationSafe(currentCover.transform.position);
             subState = CombatSubState.InCover;
             nextCoverSwitchTime = Time.time + Random.Range(minTimeInCover, maxTimeInCover);
+        }
+
+        /// <summary> Ziel nur setzen, wenn der Agent gueltig auf dem NavMesh liegt. </summary>
+        private bool SetDestinationSafe(Vector3 destination)
+        {
+            if (!agent.isOnNavMesh || !agent.isActiveAndEnabled) return false;
+            return agent.SetDestination(destination);
+        }
+
+        /// <summary> Siehe EnemyController.HasArrived - 'remainingDistance' ist ohne Pfad unendlich. </summary>
+        private bool HasArrived()
+        {
+            if (agent.pathPending) return false;
+            if (!agent.hasPath) return true;
+            if (agent.pathStatus != NavMeshPathStatus.PathComplete) return true;
+
+            return agent.remainingDistance <= agent.stoppingDistance + 0.25f;
         }
 
         private CoverPoint FindNearestFreeCover()
@@ -145,7 +188,7 @@ namespace WAD.Enemies
         // ---- InCover: warten bis am Ziel, dann feuern, danach irgendwann neue Deckung ----
         private void TickInCover(bool hasSight)
         {
-            bool arrived = !agent.pathPending && agent.remainingDistance < 0.5f;
+            bool arrived = HasArrived();
 
             if (arrived && hasSight)
             {
@@ -184,6 +227,14 @@ namespace WAD.Enemies
 
         private void FaceAndFire()
         {
+            if (enemy.PlayerTransform == null) return;
+
+            // Kein Feuern durch Waende: Deckung bedeutet nicht automatisch Sicht.
+            if (!HasLineOfSightToPlayer()) return;
+
+            // Reichweite beachten - ExecuteAttack() selbst prueft keine Distanz.
+            if (Vector3.Distance(transform.position, enemy.PlayerTransform.position) > enemy.attackRange) return;
+
             transform.LookAt(new Vector3(enemy.PlayerTransform.position.x, transform.position.y, enemy.PlayerTransform.position.z));
             enemy.ExecuteAttack();
         }
@@ -200,7 +251,7 @@ namespace WAD.Enemies
                 if (currentCover != null) currentCover.occupiedBy = null;
                 currentCover = best;
                 currentCover.occupiedBy = enemy;
-                agent.SetDestination(currentCover.transform.position);
+                SetDestinationSafe(currentCover.transform.position);
             }
 
             subState = CombatSubState.SuppressiveFire;

@@ -4,14 +4,12 @@ using UnityEngine;
 using WAD.Player;
 using WAD.Weapons.Attachments;
 using WAD.Enemies;
+using WAD.Inventory.UI;
 
 namespace WAD.Weapons
 {
     /// <summary>
     /// Steuert eine einzelne, aktuell ausgeruestete Waffe.
-    /// Animation-Slots (siehe [Header("Animation")]): Fire_Hip, Fire_ADS,
-    /// BoltCycle, Inspect, Reload_Empty, Reload_Partial, Idle - jeweils als
-    /// Animator-Trigger/Parameter-Name konfigurierbar.
     /// </summary>
     public class WeaponController : MonoBehaviour, WAD.Inventory.IInteractable
     {
@@ -22,9 +20,10 @@ namespace WAD.Weapons
         public Transform muzzlePoint;
         public Camera playerCamera;
         public TarkovMovementController movementController;
-        public WeaponAttachmentManager attachments; // optional
-        public PlayerLean playerLean; // optional, fuer Blindfeuer
-        public WAD.Weapons.Casings.ShellCasingEjector casingEjector; // optional, fuer Huelsenauswurf
+        public FirstPersonCameraLook cameraLook; // fuer Reload-Kamera-Animation
+        public WeaponAttachmentManager attachments;
+        public PlayerLean playerLean;
+        public WAD.Weapons.Casings.ShellCasingEjector casingEjector;
 
         [Header("Munition")]
         public Magazine loadedMagazine;
@@ -38,56 +37,72 @@ namespace WAD.Weapons
 
         [Header("Animation")]
         public Animator animator;
-        [Tooltip("Getriggert beim Schuss aus der Hüfte (nicht zielend)")]
         public string fireHipAnimTrigger = "Fire_Hip";
-        [Tooltip("Getriggert beim Schuss waehrend ADS (zielend)")]
         public string fireADSAnimTrigger = "Fire_ADS";
         public string boltCycleAnimTrigger = "BoltCycle";
         public string inspectAnimTrigger = "Inspect";
-        [Tooltip("Getriggert wenn das Magazin VOR dem Nachladen leer war")]
         public string emptyReloadAnimTrigger = "Reload_Empty";
-        [Tooltip("Getriggert wenn das Magazin VOR dem Nachladen noch Patronen hatte")]
         public string partialReloadAnimTrigger = "Reload_Partial";
-        [Tooltip("Getriggert wenn die Waffe aktiv wird (ausgeruestet) - fuer eine saubere Idle-Pose")]
         public string idleAnimTrigger = "Idle";
         public string isAimingBoolParam = "IsAiming";
 
-        [Header("Blindfeuer (Punkt 7)")]
-        [Tooltip("Streuungs-Multiplikator beim Feuern waehrend des Lehnens ohne ADS ('um die Ecke schiessen, ohne zu zielen')")]
+        [Header("Blindfeuer")]
         public float blindFireSpreadMultiplier = 5f;
 
-        [Header("Near-Miss-Erkennung (Punkt 8, fuer Gegner-Unterdrueckung)")]
+        [Header("Near-Miss-Erkennung")]
         public float nearMissDetectionRadius = 0.6f;
 
         [Header("Modell-Korrektur")]
-        [Tooltip("Falls das importierte Modell falsch herum zeigt (z.B. Lauf zeigt rueckwaerts): hier das sichtbare Modell-Kindobjekt zuweisen")]
         public Transform modelRoot;
-        [Tooltip("Korrektur-Rotation in Grad, z.B. (0, 180, 0) wenn das Modell um 180° verdreht importiert wurde")]
         public Vector3 modelRotationOffsetEuler = Vector3.zero;
 
-        [Header("ADS-Ausrichtung (Punkt 10)")]
-        [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root")]
+        [Header("ADS-Ausrichtung")]
+        [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root. WICHTIG: bei JEDER Waffe zuweisen, nicht nur bei Waffen mit Optik!")]
         public Transform defaultIronSightAimPoint;
-        [Tooltip("Wie schnell die Waffe beim ADS zur Kamera hin ausgerichtet wird")]
         public float adsPositionLerpSpeed = 10f;
-        private Vector3 hipFirePosition; // urspruengliche Position relativ zum WeaponSocket
-        private bool hipFirePositionCaptured;
 
         // --- Zustand ---
         private float lastFireTime = -999f;
+        private float lastDryFireTime = -999f;
+        [Tooltip("Mindestabstand zwischen zwei Klick-Sounds bei leerem Magazin")]
+        public float dryFireCooldown = 0.25f;
         private bool isReloading;
         private bool isChamberedRoundReady = true;
         private float currentRecoilAccumulated;
         private bool loggedMissingWeaponData;
-        public bool isEquipped  { get; private set; } // true erst NACHDEM PlayerWeaponHolder.PickUpWeapon() sie ausgeruestet hat
+        public bool isEquipped { get; private set; }
         public bool IsAiming { get; private set; }
+        public bool IsReloadingPublic => isReloading;
 
-        /// <summary> Von PlayerWeaponHolder aufgerufen - verhindert, dass lose in der Welt liegende (noch nicht aufgehobene) Waffen auf Eingaben reagieren. </summary>
-        public void SetEquipped(bool equipped) => isEquipped = equipped;
+        /// <summary> Gesamtanzahl Patronen in allen Reserve-Magazinen (fuer HUD/Inspect). </summary>
+        public int ReserveRoundsTotal
+        {
+            get
+            {
+                int total = 0;
+                foreach (var mag in reserveMagazines) total += mag.currentRounds;
+                return total;
+            }
+        }
+
+        /// <summary> Effektive Nachladedauer inkl. Magazin-Multiplikator (Trommelmagazine sind langsamer). </summary>
+        public float EffectiveReloadSeconds
+        {
+            get
+            {
+                if (weaponData == null) return 0f;
+
+                float mult = loadedMagazine != null && loadedMagazine.magazineType != null
+                    ? loadedMagazine.magazineType.reloadTimeMultiplier
+                    : 1f;
+
+                return weaponData.reloadTimeSeconds * Mathf.Max(0.1f, mult);
+            }
+        }
 
         public event System.Action<int, int> OnAmmoChanged;
         public event System.Action OnFired;
-        public static event System.Action GlobalOnFired; // fuer Range-Statistik, unabhaengig von der aktiven Waffe
+        public static event System.Action GlobalOnFired;
 
         public string InteractionPrompt => $"F - {weaponData?.displayName} aufheben";
 
@@ -96,6 +111,9 @@ namespace WAD.Weapons
             interactor.weaponHolder?.PickUpWeapon(this);
         }
 
+        /// <summary> Von PlayerWeaponHolder aufgerufen - verhindert, dass lose in der Welt liegende Waffen auf Eingaben reagieren. </summary>
+        public void SetEquipped(bool equipped) => isEquipped = equipped;
+
         private void Awake()
         {
             if (modelRoot != null)
@@ -103,21 +121,50 @@ namespace WAD.Weapons
                 modelRoot.localRotation = Quaternion.Euler(modelRotationOffsetEuler);
             }
 
+            EnsureAudioSource();
+
             if (attachments != null)
             {
                 attachments.OnAttachmentsChanged += ApplyMagazineTypeOverride;
             }
         }
 
+        /// <summary>
+        /// Stellt sicher, dass eine AudioSource zum Abspielen der Schuss-/
+        /// Nachlade-/Klick-Sounds existiert. Wichtig fuer Waffen, deren Prefab
+        /// gar keine AudioSource mitbringt (z.B. M1911, XM607) - die waren
+        /// sonst komplett stumm, obwohl WeaponSO die Clips zuweist.
+        /// </summary>
+        private void EnsureAudioSource()
+        {
+            if (audioSource == null) audioSource = GetComponent<AudioSource>();
+
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+                // PlayOnAwake aus: sonst warnt Unity, weil kein Clip gesetzt ist.
+                audioSource.playOnAwake = false;
+                audioSource.spatialBlend = 0f; // Waffen-Sounds sind am Spieler ohnehin 2D-nah
+            }
+        }
+
         private void OnEnable()
         {
-            // Wird auch beim Waffenwechsel (SetActive(true)) ausgeloest -
-            // sorgt fuer eine saubere Idle-Pose statt eines haengenden Frames
-            // der letzten Aktion der vorherigen Aktivierung.
             if (animator != null && !string.IsNullOrEmpty(idleAnimTrigger))
             {
                 animator.SetTrigger(idleAnimTrigger);
             }
+        }
+
+        private void OnDisable()
+        {
+            // Beim Waffenwechsel wird das GameObject per SetActive(false)
+            // deaktiviert - laufende Coroutinen werden dabei endgueltig beendet
+            // und laufen beim Wiederaktivieren NICHT weiter. Ohne dieses
+            // Aufraeumen blieb 'isReloading' fuer immer true und die Waffe
+            // konnte danach nie wieder schiessen, nachladen oder zielen.
+            StopAllCoroutines();
+            isReloading = false;
         }
 
         private void OnDestroy()
@@ -128,12 +175,6 @@ namespace WAD.Weapons
             }
         }
 
-        /// <summary>
-        /// Wird aufgerufen, wenn sich Attachments aendern (z.B. Trommelmagazin
-        /// montiert/entfernt, Punkt 8) - wechselt den Magazin-TYP des geladenen
-        /// Magazins, nicht nur eine Zahl. Patronenzahl wird auf die neue
-        /// Kapazitaet begrenzt, aber nicht ueberschrieben.
-        /// </summary>
         private void ApplyMagazineTypeOverride()
         {
             if (attachments == null || loadedMagazine == null) return;
@@ -152,20 +193,19 @@ namespace WAD.Weapons
 
         private void Update()
         {
-            if (!isEquipped) return; // noch nicht aufgehoben/ausgeruestet - keine Eingaben verarbeiten
+            if (!isEquipped) return;
 
             if (weaponData == null)
             {
                 if (!loggedMissingWeaponData)
                 {
-                    Debug.LogWarning($"[WeaponController:{gameObject.name}] 'Weapon Data' ist nicht zugewiesen - Waffe ist funktionsunfähig, bis das im Inspector nachgetragen wird.");
+                    Debug.LogWarning($"[WeaponController:{gameObject.name}] 'Weapon Data' ist nicht zugewiesen.");
                     loggedMissingWeaponData = true;
                 }
                 return;
             }
 
             HandleAimInput();
-            HandleADSPositioning();
             HandleFireInput();
             HandleReloadInput();
             HandleBoltActionInput();
@@ -173,11 +213,24 @@ namespace WAD.Weapons
             RecoverRecoil();
         }
 
+        /// <summary>
+        /// LATE Update statt Update: laeuft garantiert NACH der Animator-
+        /// Auswertung dieses Frames. Dadurch "gewinnt" die ADS-Ausrichtung
+        /// immer, egal was der aktuell abgespielte Animation-Clip an
+        /// Positions-/Rotationswerten gesetzt hat - kein Kampf mehr zwischen
+        /// Code und Animation, ohne dass die Hierarchie umgebaut werden muss.
+        /// </summary>
+        private void LateUpdate()
+        {
+            if (!isEquipped || weaponData == null) return;
+            HandleADSPositioning();
+        }
+
         private bool IsBlindFiring => playerLean != null && playerLean.IsLeaning && !IsAiming;
 
         private void HandleAimInput()
         {
-            IsAiming = Input.GetMouseButton(1) && !isReloading;
+            IsAiming = Input.GetMouseButton(1) && !isReloading && !InventoryUIController.IsOpen;
             if (movementController != null)
             {
                 movementController.isAiming = IsAiming;
@@ -200,13 +253,6 @@ namespace WAD.Weapons
             }
         }
 
-        /// <summary>
-        /// Richtet die Waffe so aus, dass der Zielpunkt der AKTIVEN Optik
-        /// (oder ohne montierte Optik: 'Default Iron Sight Aim Point') exakt
-        /// vor der Kamera liegt. Loest das Riser-Problem: bisher aenderte ADS
-        /// nur das FOV, die Sichtlinie ging aber immer durch die Kimme statt
-        /// durch eine erhoehte Optik.
-        /// </summary>
         private void HandleADSPositioning()
         {
             if (playerCamera == null || transform.parent == null) return;
@@ -214,17 +260,17 @@ namespace WAD.Weapons
             Transform aimPoint = attachments != null ? attachments.GetOpticAimPoint() : null;
             if (aimPoint == null) aimPoint = defaultIronSightAimPoint;
 
-            Vector3 targetLocalPosition = Vector3.zero; // Hueft-Position = Baseline
+            Vector3 targetLocalPosition = Vector3.zero;
 
             if (IsAiming && aimPoint != null)
             {
                 Vector3 originalLocalPos = transform.localPosition;
-                transform.localPosition = Vector3.zero; // kurz auf Hueft-Baseline setzen zum Messen
+                transform.localPosition = Vector3.zero;
 
                 Vector3 worldOffsetNeeded = playerCamera.transform.position - aimPoint.position;
                 Vector3 localOffsetNeeded = transform.parent.InverseTransformVector(worldOffsetNeeded);
 
-                transform.localPosition = originalLocalPos; // sofort zurueck fuer sanftes Lerp
+                transform.localPosition = originalLocalPos;
                 targetLocalPosition = localOffsetNeeded;
             }
 
@@ -234,19 +280,21 @@ namespace WAD.Weapons
 
         private void HandleFireInput()
         {
-            if (!Application.isFocused) return; // verhindert "haengende" Eingaben bei Editor-Fensterwechsel
+            if (!Application.isFocused) return;
+            if (InventoryUIController.IsOpen) return; // nicht schiessen, waehrend das Inventar offen ist
 
             bool wantsToFire = weaponData.fireMode == FireMode.FullAuto
                 ? Input.GetMouseButton(0)
                 : Input.GetMouseButtonDown(0);
 
             if (!wantsToFire) return;
-            Debug.Log($"[WeaponController:{gameObject.name}] Feuer-Input erkannt (isEquipped, wird an TryFire uebergeben).");
             TryFire();
         }
 
         private void HandleReloadInput()
         {
+            if (InventoryUIController.IsOpen) return;
+
             if (Input.GetKeyDown(KeyCode.R) && !isReloading)
             {
                 TryReload();
@@ -273,25 +321,22 @@ namespace WAD.Weapons
 
         public void TryFire()
         {
-            if (isReloading) { Debug.Log($"[WeaponController:{gameObject.name}] TryFire abgebrochen: isReloading=true"); return; }
-            if (weaponData.fireMode == FireMode.BoltAction && !isChamberedRoundReady) { Debug.Log($"[WeaponController:{gameObject.name}] TryFire abgebrochen: Verschluss nicht bereit"); return; }
-            if (Time.time - lastFireTime < weaponData.SecondsBetweenShots) { Debug.Log($"[WeaponController:{gameObject.name}] TryFire abgebrochen: Feuerrate-Cooldown"); return; }
+            if (isReloading) return;
+            if (weaponData.fireMode == FireMode.BoltAction && !isChamberedRoundReady) return;
+            if (Time.time - lastFireTime < weaponData.SecondsBetweenShots) return;
 
             if (loadedMagazine == null || loadedMagazine.IsEmpty)
             {
-                Debug.Log($"[WeaponController:{gameObject.name}] TryFire: Magazin leer/null -> Dry Fire");
                 PlayDryFireSound();
                 return;
             }
 
             if (loadedMagazine.ammoType == null)
             {
-                Debug.LogWarning($"[WeaponController:{gameObject.name}] Geladenes Magazin hat keinen 'Ammo Type' zugewiesen - Schuss abgebrochen. Bitte im Inspector das Magazin vollstaendig konfigurieren.");
+                Debug.LogWarning($"[WeaponController:{gameObject.name}] Geladenes Magazin hat keinen 'Ammo Type' zugewiesen.");
                 PlayDryFireSound();
                 return;
             }
-
-            Debug.Log($"[WeaponController:{gameObject.name}] TryFire erfolgreich - loese Schuss aus. loadedMagazine.currentRounds vor Schuss: {loadedMagazine.currentRounds}");
 
             loadedMagazine.TryConsumeRound();
             lastFireTime = Time.time;
@@ -300,7 +345,6 @@ namespace WAD.Weapons
             ApplyRecoil();
             NotifyAmmoChanged();
             OnFired?.Invoke();
-            Debug.Log($"[WeaponController:{gameObject.name}] OnFired-Event ausgeloest.");
             GlobalOnFired?.Invoke();
 
             if (weaponData.fireMode == FireMode.BoltAction)
@@ -373,7 +417,6 @@ namespace WAD.Weapons
                 casingEjector.EjectCasing(loadedMagazine.ammoType.casingPrefab);
             }
 
-            // Fire_Hip vs Fire_ADS - je nach aktuellem Zielzustand
             string fireTrigger = IsAiming ? fireADSAnimTrigger : fireHipAnimTrigger;
             if (animator != null && !string.IsNullOrEmpty(fireTrigger))
             {
@@ -441,8 +484,6 @@ namespace WAD.Weapons
         {
             isReloading = true;
 
-            // VOR dem Austausch pruefen: war das alte Magazin leer oder teilvoll?
-            // Bestimmt, welche der beiden Reload-Animationen gespielt wird.
             bool wasEmpty = loadedMagazine == null || loadedMagazine.IsEmpty;
 
             if (audioSource != null && weaponData.reloadSound != null)
@@ -456,7 +497,14 @@ namespace WAD.Weapons
                 animator.SetTrigger(reloadTrigger);
             }
 
-            yield return new WaitForSeconds(weaponData.reloadTimeSeconds);
+            // Dauer an die echte Nachladezeit koppeln (inkl. Magazin-Multiplikator,
+            // z.B. Trommelmagazine), damit Kamera-Bewegung und Magazinwechsel
+            // synchron enden.
+            float reloadSeconds = EffectiveReloadSeconds;
+
+            cameraLook?.TriggerReloadAnimation(reloadSeconds);
+
+            yield return new WaitForSeconds(reloadSeconds);
 
             if (loadedMagazine != null && !loadedMagazine.IsEmpty)
             {
@@ -489,7 +537,8 @@ namespace WAD.Weapons
             isReloading = false;
         }
 
-        private void NotifyAmmoChanged()
+        /// <summary> Oeffentlich, damit z.B. WorldMagazinePickup das HUD nach dem Aufsammeln aktualisieren kann. </summary>
+        public void NotifyAmmoChanged()
         {
             int reserveTotal = 0;
             foreach (var mag in reserveMagazines) reserveTotal += mag.currentRounds;
@@ -499,6 +548,11 @@ namespace WAD.Weapons
 
         private void PlayDryFireSound()
         {
+            // Ohne Cooldown wurde bei Vollautomatik mit leerem Magazin JEDEN
+            // Frame ein weiterer Klick-Sound gestartet (Sound-Spam).
+            if (Time.time - lastDryFireTime < dryFireCooldown) return;
+            lastDryFireTime = Time.time;
+
             if (audioSource != null && weaponData.dryFireSound != null)
             {
                 audioSource.PlayOneShot(weaponData.dryFireSound);

@@ -47,7 +47,12 @@ namespace WAD.Inventory
                     var entry = lootTable.RollWeighted(rng);
                     if (entry?.itemAsset is IInventoryItem item)
                     {
-                        int qty = rng.Next(entry.minQuantity, entry.maxQuantity + 1);
+                        // Random.Next(min, maxExclusive) wirft eine
+                        // ArgumentOutOfRangeException, wenn im LootTable
+                        // versehentlich minQuantity > maxQuantity steht.
+                        int lo = Mathf.Min(entry.minQuantity, entry.maxQuantity);
+                        int hi = Mathf.Max(entry.minQuantity, entry.maxQuantity);
+                        int qty = rng.Next(lo, hi + 1);
                         rolledLoot.Add((item, qty));
                     }
                 }

@@ -12,11 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
   m_Name: MagType_STANAG_20rds
   m_EditorClassIdentifier: 
-  magazineTypeId: 
+  magazineTypeId: stanag_20
   displayName: STANAG 20 Rounds
   icon: {fileID: 0}
+  description: 
+  magazineClass: 0
   ammoType: {fileID: 11400000, guid: 3e917ed2de90b464d9a9af981a87b4d7, type: 2}
   baseCapacity: 20
   emptyWeightKg: 0.2
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
   groundModelPrefab: {fileID: 5970758958966170451, guid: 529c91ad1c7001c499c4ae239e95b89a,
     type: 3}
+  attachmentVisualPrefab: {fileID: 0}

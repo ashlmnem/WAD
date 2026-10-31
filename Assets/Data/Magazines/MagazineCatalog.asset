@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e2c854bb24a44d4b2ba1deb98977cdf, type: 3}
+  m_Name: MagazineCatalog
+  m_EditorClassIdentifier: 
+  allMagazineTypes:
+  - {fileID: 11400000, guid: 495dd91e58dcf084fb79cec0187e8ef2, type: 2}
+  - {fileID: 11400000, guid: df85447b2f6744ce85f601661b91b6d2, type: 2}
+  - {fileID: 11400000, guid: f2b9f9c878cf4c45aabbbf23a29d1493, type: 2}
+  - {fileID: 11400000, guid: 382c9330984929d4ea4a95d3a1750e27, type: 2}
+  - {fileID: 11400000, guid: 8e41702bbb8f9e54e8a4fcee22689937, type: 2}
+  - {fileID: 11400000, guid: 583d5be5f5604781b1dbc475dfd90469, type: 2}
+  - {fileID: 11400000, guid: aced6e2fc13aa9147a5d8e167e7bd92f, type: 2}
+  - {fileID: 11400000, guid: 88db3fcfbc00aa646811f1b5a6d0255a, type: 2}
+  - {fileID: 11400000, guid: 88ef50166e1279845b0383bb58b34ea4, type: 2}
+  - {fileID: 11400000, guid: 02900dc1be8640e99be212848a4f21b4, type: 2}
+  - {fileID: 11400000, guid: a9f26d48ec5b9b1409f22b5439f1a77e, type: 2}
+  - {fileID: 11400000, guid: 0910d4da6f63467f83c3059d05405f55, type: 2}
+  - {fileID: 11400000, guid: 3f7c1d24b8e94a6c9d5f0a1b2c3d4e5f, type: 2}
+  - {fileID: 11400000, guid: 00f737d0c1f43ca498d88a7f2d5309f5, type: 2}

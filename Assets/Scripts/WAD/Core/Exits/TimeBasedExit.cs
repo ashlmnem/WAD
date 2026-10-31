@@ -15,5 +15,11 @@ namespace WAD.Core
 
         public void Tick(float deltaTime) => elapsed += deltaTime;
         public void ResetTimer() => elapsed = 0f;
+
+        public override void ResetState()
+        {
+            base.ResetState();
+            ResetTimer();
+        }
     }
 }

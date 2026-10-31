@@ -118,6 +118,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 28935137dc0dbdf499c0154d4a1096aa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ammoType: {fileID: 11400000, guid: d41904a7c37dcb24d82aebbe05d09ada, type: 2}
-  capacity: 30
+  magazineType: {fileID: 11400000, guid: 495dd91e58dcf084fb79cec0187e8ef2, type: 2}
   currentRounds: -1

@@ -12,11 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
   m_Name: MagType_M1911_7rds
   m_EditorClassIdentifier: 
-  magazineTypeId: 
+  magazineTypeId: m1911_7
   displayName: M1911 7 Rounds
   icon: {fileID: 0}
+  description: 
+  magazineClass: 0
   ammoType: {fileID: 11400000, guid: 846d8e9aac1a82a489d8c493b636e52f, type: 2}
   baseCapacity: 7
   emptyWeightKg: 0.1
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
   groundModelPrefab: {fileID: 469867848661841724, guid: 51a23d766254fb94a8f072483f796eda,
     type: 3}
+  attachmentVisualPrefab: {fileID: 0}

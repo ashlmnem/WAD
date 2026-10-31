@@ -10,10 +10,10 @@ namespace WAD.UI
     public class MainMenuController : MonoBehaviour
     {
         [Header("Szenen-Namen (exakt wie in Build Settings)")]
-        public string firstLevelSceneName = "Level1_TheStorm";
+        public string firstLevelSceneName = "SampleScene";
         public string shootingRangeSceneName = "ShootingRange";
 
-        [Header("Loadout-Menü-Panel")]
+        [Header("Loadout-Menue-Panel")]
         public GameObject loadoutMenuPanel;
 
         private void Start()
@@ -31,12 +31,15 @@ namespace WAD.UI
 
         public void OnNewGameClicked()
         {
-            // Neuer Run: jeglicher alter RunState wird beim Szenenwechsel
-            // ohnehin frisch instanziiert (RunStateManager.Awake), da die
-            // vorherige Menue-Szene keinen DontDestroyOnLoad-RunStateManager hatte.
+            // Neuer Run: den persistenten Run-State explizit zuruecksetzen.
+            // RunStateManager ueberlebt Szenenwechsel (DontDestroyOnLoad), ein
+            // neuer Run wuerde sonst Flags, Treibstoff und Kill-Zaehler des
+            // vorherigen Runs erben.
+            WAD.Core.RunStateManager.Instance?.BeginNewRun();
+
             PlayerPrefs.SetInt(SaveExistsKey, 1);
             PlayerPrefs.Save();
-            SceneManager.LoadScene(firstLevelSceneName);
+            LoadFirstLevel();
         }
 
         public void OnContinueClicked()
@@ -46,7 +49,7 @@ namespace WAD.UI
             // TODO: sobald ein echtes Save-System existiert (Stash-Inhalt,
             // letzter erreichter Level-Index), hier den gespeicherten Zustand
             // laden statt immer bei Level 1 zu starten.
-            SceneManager.LoadScene(firstLevelSceneName);
+            LoadFirstLevel();
         }
 
         public void OnQuitClicked()
@@ -60,7 +63,37 @@ namespace WAD.UI
 
         public void OnShootingRangeClicked()
         {
-            SceneManager.LoadScene(shootingRangeSceneName);
+            if (!TryLoadScene(shootingRangeSceneName)) return;
+        }
+
+        /// <summary>
+        /// Laedt die erste Level-Szene. Vorher stand hier fest "Level1_TheStorm" -
+        /// diese Szene existiert im Projekt nicht und ist nicht in den Build
+        /// Settings, wodurch "Neues Spiel" und "Fortsetzen" eine Exception geworfen
+        /// haben. Zusaetzlich wird jetzt geprueft, ob die Szene ueberhaupt ladbar ist.
+        /// </summary>
+        private void LoadFirstLevel()
+        {
+            TryLoadScene(firstLevelSceneName);
+        }
+
+        private bool TryLoadScene(string sceneName)
+        {
+            if (string.IsNullOrEmpty(sceneName))
+            {
+                Debug.LogError("[MainMenuController] Kein Szenenname konfiguriert.");
+                return false;
+            }
+
+            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            {
+                Debug.LogError($"[MainMenuController] Szene '{sceneName}' ist nicht ladbar - " +
+                               "bitte in File > Build Settings aufnehmen und den Namen hier exakt eintragen.");
+                return false;
+            }
+
+            SceneManager.LoadScene(sceneName);
+            return true;
         }
 
         public void ToggleLoadoutMenu()

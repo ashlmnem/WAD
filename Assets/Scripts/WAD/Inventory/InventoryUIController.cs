@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -24,16 +25,66 @@ namespace WAD.Inventory.UI
         private readonly List<GameObject> spawnedSlots = new List<GameObject>();
         private bool isOpen;
 
+        /// <summary>
+        /// True, solange irgendein Inventar-Panel offen ist. WeaponController
+        /// blockiert damit Schiessen/Zielen/Nachladen, waehrend der Spieler im
+        /// Inventar klickt - vorher feuerte ein Klick auf einen Slot einen Schuss.
+        /// </summary>
+        public static bool IsOpen { get; private set; }
+
         private void Start()
         {
-            if (inventory != null) inventory.OnInventoryChanged += RebuildSlots;
+            ResolveMissingReferences();
+
+            if (inventory != null)
+            {
+                inventory.OnInventoryChanged += RebuildSlots;
+            }
+            else
+            {
+                Debug.LogWarning($"[InventoryUI:{name}] Kein InventoryManager gefunden - die Inventar-Anzeige bleibt leer.");
+            }
+
             SetOpen(false);
             RebuildSlots();
+        }
+
+        /// <summary>
+        /// Die UI liegt im Canvas-Prefab, der InventoryManager aber auf dem Spieler.
+        /// Diese Referenz kann deshalb nicht im Prefab gespeichert werden; ohne
+        /// diesen Fallback blieb 'inventory' null und es wurde nie ein Slot erzeugt.
+        /// </summary>
+        private void ResolveMissingReferences()
+        {
+            if (inventory == null) inventory = FindFirstObjectByType<InventoryManager>();
+
+            if (panelRoot == null)
+            {
+                Debug.LogWarning($"[InventoryUI:{name}] 'Panel Root' ist nicht zugewiesen - Tab kann kein Panel ein-/ausblenden.");
+            }
+
+            if (contentParent == null)
+            {
+                Debug.LogWarning($"[InventoryUI:{name}] 'Content Parent' ist nicht zugewiesen - es koennen keine Slots erzeugt werden.");
+            }
+
+            if (slotPrefab == null)
+            {
+                Debug.LogWarning($"[InventoryUI:{name}] 'Slot Prefab' ist nicht zugewiesen - es koennen keine Slots erzeugt werden.");
+            }
         }
 
         private void OnDestroy()
         {
             if (inventory != null) inventory.OnInventoryChanged -= RebuildSlots;
+
+            // Nicht "IsOpen = false" pauschal, sondern nur den eigenen Beitrag
+            // zuruecknehmen (es koennte mehr als ein Panel geben).
+            if (isOpen)
+            {
+                isOpen = false;
+                IsOpen = AnyOtherOpen();
+            }
         }
 
         private void Update()
@@ -52,7 +103,18 @@ namespace WAD.Inventory.UI
             Cursor.lockState = open ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = open;
 
+            IsOpen = open || AnyOtherOpen();
+
             if (open) RebuildSlots();
+        }
+
+        private bool AnyOtherOpen()
+        {
+            foreach (var other in FindObjectsByType<InventoryUIController>(FindObjectsSortMode.None))
+            {
+                if (other != this && other.isOpen) return true;
+            }
+            return false;
         }
 
         private void HandleSlotClicked(string itemId)

@@ -1,24 +1,40 @@
 using UnityEngine;
+using WAD.Feedback;
 
 namespace WAD.Enemies
 {
     /// <summary>
     /// Liegt auf demselben Objekt wie EnemyController. Spielt passende Sounds
     /// bei Idle (zufaellig, periodisch), Sichtkontakt zum Spieler, Schaden und Tod.
+    ///
+    /// Sounds laufen bevorzugt ueber den ActionFeedbackPlayer (pro Aktion im
+    /// Inspector eintragbar). Solange dort nichts steht, gelten die Clip-Listen
+    /// auf dieser Komponente.
     /// </summary>
     [RequireComponent(typeof(EnemyController))]
     [RequireComponent(typeof(AudioSource))]
     public class EnemyAudio : MonoBehaviour
     {
-        [Header("Sounds")]
+        [Header("Sounds (Altbestand - wird vom Feedback-System ueberstimmt, sobald dort eingetragen)")]
         public AudioClip[] idleSounds;
         public AudioClip[] spottedPlayerSounds; // z.B. "telepathischer Schrei" laut Design
         public AudioClip[] damagedSounds;
         public AudioClip[] deathSounds;
 
+        [Header("Erweiterte Aktionen")]
+        public AudioClip[] attackSounds;
+        public AudioClip[] suppressedSounds;
+        public AudioClip[] alertedSounds;
+
         [Header("Idle-Timing")]
         public float minIdleInterval = 6f;
         public float maxIdleInterval = 14f;
+
+        [Header("Feedback")]
+        [Tooltip("Zentrale Feedback-Station. Leer = automatisch gesucht.")]
+        public ActionFeedbackPlayer feedback;
+        [Tooltip("Kampf-Komponente (Kampf-State). Leer = automatisch gesucht.")]
+        public EnemyCombatAI combatAI;
 
         private EnemyController enemy;
         private AudioSource audioSource;
@@ -29,6 +45,8 @@ namespace WAD.Enemies
         {
             enemy = GetComponent<EnemyController>();
             audioSource = GetComponent<AudioSource>();
+            if (feedback == null) feedback = GetComponent<ActionFeedbackPlayer>();
+            if (combatAI == null) combatAI = GetComponent<EnemyCombatAI>();
             SetNextIdleDelay();
         }
 
@@ -37,6 +55,10 @@ namespace WAD.Enemies
             enemy.OnSpottedPlayer += HandleSpottedPlayer;
             enemy.OnDamaged += HandleDamaged;
             enemy.OnDeath += HandleDeath;
+
+            // Unterdrueckung (Near-Miss) -> eigener Sound-Slot
+            var suppression = GetComponent<EnemySuppressionController>();
+            if (suppression != null) suppression.OnSuppressed += HandleSuppressed;
         }
 
         private void OnDisable()
@@ -44,6 +66,9 @@ namespace WAD.Enemies
             enemy.OnSpottedPlayer -= HandleSpottedPlayer;
             enemy.OnDamaged -= HandleDamaged;
             enemy.OnDeath -= HandleDeath;
+
+            var suppression = GetComponent<EnemySuppressionController>();
+            if (suppression != null) suppression.OnSuppressed -= HandleSuppressed;
         }
 
         private void Update()
@@ -55,7 +80,7 @@ namespace WAD.Enemies
             {
                 idleTimer = 0f;
                 SetNextIdleDelay();
-                PlayRandom(idleSounds);
+                PlayOrFallback(ActionId.EnemyIdle, idleSounds);
             }
         }
 
@@ -64,9 +89,33 @@ namespace WAD.Enemies
             nextIdleDelay = Random.Range(minIdleInterval, maxIdleInterval);
         }
 
-        private void HandleSpottedPlayer(EnemyController e) => PlayRandom(spottedPlayerSounds);
-        private void HandleDamaged(EnemyController e, float amount) => PlayRandom(damagedSounds);
-        private void HandleDeath(EnemyController e) => PlayRandom(deathSounds);
+        private void HandleSpottedPlayer(EnemyController e) => PlayOrFallback(ActionId.EnemySpottedPlayer, spottedPlayerSounds);
+        private void HandleDamaged(EnemyController e, float amount) => PlayOrFallback(ActionId.EnemyHurt, damagedSounds);
+        private void HandleDeath(EnemyController e) => PlayOrFallback(ActionId.EnemyDeath, deathSounds);
+        private void HandleSuppressed() => PlayOrFallback(ActionId.EnemySuppressed, suppressedSounds);
+
+        /// <summary> Vom Kampf-System aufgerufen, wenn der Gegner feuert. </summary>
+        public void NotifyAttack()
+        {
+            PlayOrFallback(ActionId.EnemyAttackRanged, attackSounds);
+        }
+
+        /// <summary> Vom Kampf-System aufgerufen, wenn der Gegner alarmiert wird. </summary>
+        public void NotifyAlerted()
+        {
+            PlayOrFallback(ActionId.EnemyAlerted, alertedSounds);
+        }
+
+        private void PlayOrFallback(ActionId action, AudioClip[] clips)
+        {
+            if (feedback != null)
+            {
+                feedback.PlayOrFallback(action, clips);
+                return;
+            }
+
+            PlayRandom(clips);
+        }
 
         private void PlayRandom(AudioClip[] clips)
         {

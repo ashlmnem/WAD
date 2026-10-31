@@ -12,16 +12,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57e6477da6b6e4e44bc31dd0922c5a10, type: 3}
   m_Name: Quest_DeathResistance
   m_EditorClassIdentifier: 
-  questId: 
+  questId: DeathResistance
   title: Death Resistance
   description: 3 AKM Mags
+  offerLine: Offer
+  completionLine: Completion
+  inProgressLine: In Progress
   requirements:
   - itemAsset: {fileID: 147388564907428901, guid: 5cd383a21777bb147a62022ff0a2a5a7,
       type: 3}
     quantity: 3
+  requiredKills: 0
+  requiredFlag: 
+  prerequisiteQuests: []
+  requiredLevelIndex: 0
   itemRewards:
   - itemAsset: {fileID: 11400000, guid: 84d5d8f05f774e24b8967f26bb41f4dd, type: 2}
     quantity: 1
   weaponReward: {fileID: 11400000, guid: b4141dcbe66604547925759329d56d5a, type: 2}
   attachmentReward: {fileID: 0}
   fuelReward: 2
+  repeatable: 1
+  listSummary: ListSummary

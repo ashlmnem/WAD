@@ -46,6 +46,11 @@ namespace WAD.Levels
 
         private void EvaluateState()
         {
+            // Der Spieler wird zur Laufzeit erzeugt und kann daher nicht im
+            // Inspector zugewiesen werden - ohne diesen Fallback blieb
+            // playerHealth null und der LowHealth-Track war nie erreichbar.
+            if (playerHealth == null) playerHealth = FindFirstObjectByType<PlayerHealth>();
+
             bool isLowHealth = playerHealth != null && playerHealth.HealthPercent01 <= lowHealthThreshold && !playerHealth.IsDead;
             bool isInCombatNow = IsAnyEnemyEngaging();
 

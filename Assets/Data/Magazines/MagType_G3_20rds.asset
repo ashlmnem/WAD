@@ -12,11 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
   m_Name: MagType_G3_20rds
   m_EditorClassIdentifier: 
-  magazineTypeId: 
+  magazineTypeId: g3_20
   displayName: G3 20 Rounds
   icon: {fileID: 0}
+  description: 
+  magazineClass: 0
   ammoType: {fileID: 11400000, guid: f0768dbce2fda9e49902f8e6e62b53e9, type: 2}
   baseCapacity: 20
   emptyWeightKg: 0.3
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
   groundModelPrefab: {fileID: 2324868201543614036, guid: 1fc4344763f57244bbdb5491ed9c598b,
     type: 3}
+  attachmentVisualPrefab: {fileID: 0}

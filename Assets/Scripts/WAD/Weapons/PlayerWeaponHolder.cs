@@ -17,6 +17,8 @@ namespace WAD.Weapons
         public TarkovMovementController movementController;
         public Camera playerCamera;
         public FirstPersonCameraLook cameraLook;
+        [Tooltip("Optional. Wird fuer Blindfeuer an die Waffe durchgereicht; falls leer, wird es gesucht.")]
+        public PlayerLean playerLean;
 
         [Header("Slots")]
         public int maxWeaponSlots = 2;
@@ -33,6 +35,14 @@ namespace WAD.Weapons
             foreach (var weapon in equippedWeapons)
             {
                 if (weapon != null) weapon.SetEquipped(true);
+            }
+
+            // Vorher blieb 'activeWeaponIndex' auf -1: GetActiveWeapon() lieferte
+            // null (HUD/Inspect-UI leer) und ALLE vorbefuellten Waffen feuerten
+            // gleichzeitig, weil nie eine deaktiviert wurde.
+            if (equippedWeapons.Count > 0)
+            {
+                EquipWeaponAtIndex(0);
             }
         }
 
@@ -107,6 +117,34 @@ namespace WAD.Weapons
         /// </summary>
         private void WireRuntimeReferences(WeaponController weapon)
         {
+            // Kamera-Look: wird sowohl vom Recoil (WeaponRecoil) als auch von der
+            // Nachlade-Kamera-Animation (WeaponController.TriggerReloadAnimation)
+            // gebraucht. Ohne diese Zeile bliebe WeaponController.cameraLook null
+            // und die Nachlade-Animation wuerde nie abgespielt.
+            if (weapon.cameraLook == null)
+            {
+                weapon.cameraLook = cameraLook;
+            }
+
+            // WeaponAttachmentManager sitzt bei mehreren Waffen-Prefabs auf
+            // DEMSELBEN GameObject, war aber im Feld 'attachments' nicht
+            // zugewiesen - dadurch wurden Optik-Spread, Recoil-Multiplikator,
+            // ADS-FOV und Zielpunkt der Optik komplett ignoriert.
+            if (weapon.attachments == null)
+            {
+                weapon.attachments = weapon.GetComponent<WAD.Weapons.Attachments.WeaponAttachmentManager>();
+            }
+
+            // Blindfeuer braucht den Lean-Zustand des Spielers.
+            if (weapon.playerLean == null && playerLean == null)
+            {
+                playerLean = GetComponentInChildren<PlayerLean>();
+            }
+            if (weapon.playerLean == null)
+            {
+                weapon.playerLean = playerLean;
+            }
+
             var recoil = weapon.GetComponent<WAD.Weapons.WeaponRecoil>();
             if (recoil != null && recoil.cameraLook == null)
             {
@@ -117,6 +155,31 @@ namespace WAD.Weapons
             if (entitySrp != null)
             {
                 entitySrp.AutoWireReferences(this);
+            }
+        }
+
+        /// <summary>
+        /// Entfernt eine Waffe aus den Slots, OHNE sie in der Welt abzulegen.
+        /// Gedacht fuer Waffen, die sich selbst ersetzen/zerstoeren (z.B.
+        /// Entity-001srp) - ohne das blieb der zerstoerte Flare-Gun-Eintrag als
+        /// Fake-Null in 'equippedWeapons' liegen und belegte dauerhaft einen Slot.
+        /// </summary>
+        public void RemoveWeapon(WeaponController weapon)
+        {
+            if (weapon == null) return;
+
+            int index = equippedWeapons.IndexOf(weapon);
+            if (index < 0) return;
+
+            equippedWeapons.RemoveAt(index);
+
+            // Indizes nach dem entfernten Eintrag verschieben sich.
+            if (activeWeaponIndex > index) activeWeaponIndex--;
+            else if (activeWeaponIndex == index) activeWeaponIndex = -1;
+
+            if (equippedWeapons.Count > 0 && activeWeaponIndex < 0)
+            {
+                EquipWeaponAtIndex(0);
             }
         }
 

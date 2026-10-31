@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace WAD.Player
@@ -31,10 +32,24 @@ namespace WAD.Player
         private float recoilPitchOffset;
         private float recoilYawOffset;
 
+        [Header("Nachlade-Kamera-Animation")]
+        [Tooltip("Wie weit die Kamera waehrend des Nachladens nach unten kippt (Grad)")]
+        public float reloadTiltDegrees = 6f;
+        [Tooltip("Seitliche Neigung waehrend des Nachladens (Grad, positiver Wert = Kamera kippt zur Seite)")]
+        public float reloadRollDegrees = 3f;
+        [Tooltip("Dauer der Nachlade-Bewegung, wenn kein eigener Wert uebergeben wird (Sekunden)")]
+        public float defaultReloadAnimationDuration = 1.5f;
+
         private float pitch;
         private float yaw;
         private Vector2 currentLookVelocity;
         private Vector2 smoothedInput;
+
+        // Laufende Nachlade-Animation. Wird als additiver Versatz auf Pitch/Roll
+        // gelegt, damit sie weder die Maus-Eingabe noch den Recoil ueberschreibt.
+        private Coroutine reloadAnimationRoutine;
+        private float reloadPitchOffset;
+        private float reloadRollOffset;
 
         private void Start()
         {
@@ -66,8 +81,8 @@ namespace WAD.Player
             recoilPitchOffset = Mathf.Lerp(recoilPitchOffset, 0f, recoilRecoverySpeed * Time.deltaTime);
             recoilYawOffset = Mathf.Lerp(recoilYawOffset, 0f, recoilRecoverySpeed * Time.deltaTime);
 
-            float finalPitch = Mathf.Clamp(pitch + recoilPitchOffset, minPitch - 20f, maxPitch);
-            transform.localRotation = Quaternion.Euler(finalPitch, 0f, 0f);
+            float finalPitch = Mathf.Clamp(pitch + recoilPitchOffset + reloadPitchOffset, minPitch - 20f, maxPitch);
+            transform.localRotation = Quaternion.Euler(finalPitch, 0f, reloadRollOffset);
 
             if (playerBody != null)
             {
@@ -80,6 +95,45 @@ namespace WAD.Player
         {
             recoilPitchOffset -= pitchKickDegrees; // negativ = Kamera kippt nach oben
             recoilYawOffset += yawKickDegrees;
+        }
+
+        /// <summary>
+        /// Von WeaponController beim Nachladen aufgerufen. Laesst die Kamera kurz
+        /// absinken und seitlich kippen (Blick auf das Magazin), und danach wieder
+        /// sauber in die Ausgangslage zurueckkehren.
+        /// </summary>
+        /// <param name="duration">Gesamtdauer. &lt;= 0 verwendet defaultReloadAnimationDuration.</param>
+        public void TriggerReloadAnimation(float duration = 0f)
+        {
+            float total = duration > 0f ? duration : defaultReloadAnimationDuration;
+            if (total <= 0f) return;
+
+            // Ein noch laufendes Nachladen wird sauber ersetzt statt sich zu stapeln.
+            if (reloadAnimationRoutine != null) StopCoroutine(reloadAnimationRoutine);
+            reloadAnimationRoutine = StartCoroutine(ReloadAnimationRoutine(total));
+        }
+
+        private IEnumerator ReloadAnimationRoutine(float duration)
+        {
+            // Der Blick senkt sich waehrend der ersten Haelfte des Nachladens ab und
+            // in der zweiten Haelfte wieder hoch - sin-Fenster sorgt fuer weiche
+            // Ein- und Ausgaenge ohne harte Richtungswechsel.
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float window = Mathf.Sin(t * Mathf.PI); // 0 -> 1 -> 0
+
+                reloadPitchOffset = -reloadTiltDegrees * window;
+                reloadRollOffset = reloadRollDegrees * window;
+
+                yield return null;
+            }
+
+            reloadPitchOffset = 0f;
+            reloadRollOffset = 0f;
+            reloadAnimationRoutine = null;
         }
     }
 }

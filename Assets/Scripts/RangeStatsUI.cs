@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using WAD.Weapons;
@@ -16,13 +17,22 @@ namespace WAD.ShootingRange
         private int shotsFired;
         private int hits;
 
+        /// <summary>
+        /// Merkt sich genau die Targets, die abonniert wurden. Vorher hat OnDisable
+        /// die Szene NEU abgefragt - dadurch blieben Handler auf Targets haengen,
+        /// die waehrend der Laufzeit erzeugt oder zerstoert wurden.
+        /// </summary>
+        private readonly List<ShootingRangeTarget> subscribedTargets = new List<ShootingRangeTarget>();
+
         private void OnEnable()
         {
             WeaponController.GlobalOnFired += HandleShotFired;
 
             foreach (var target in FindObjectsByType<ShootingRangeTarget>(FindObjectsSortMode.None))
             {
+                if (target == null) continue;
                 target.OnHit += HandleTargetHit;
+                subscribedTargets.Add(target);
             }
         }
 
@@ -30,10 +40,11 @@ namespace WAD.ShootingRange
         {
             WeaponController.GlobalOnFired -= HandleShotFired;
 
-            foreach (var target in FindObjectsByType<ShootingRangeTarget>(FindObjectsSortMode.None))
+            foreach (var target in subscribedTargets)
             {
-                target.OnHit -= HandleTargetHit;
+                if (target != null) target.OnHit -= HandleTargetHit;
             }
+            subscribedTargets.Clear();
         }
 
         private void HandleShotFired()

@@ -1,5 +1,113 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &670275325552452083
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8052035259394937348}
+  m_Layer: 0
+  m_Name: VisualRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8052035259394937348
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 670275325552452083}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.48910332, y: 4.9482965, z: -0.06594503}
+  m_LocalScale: {x: 0.33333334, y: 1.8298626, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 8198405349393783735}
+  - {fileID: 897455032847164333}
+  - {fileID: 2656880031093705276}
+  m_Father: {fileID: 1166620917110207198}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &823264643940799428
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5695390035582261554}
+  - component: {fileID: 7124585777936682102}
+  - component: {fileID: 7082220585535702874}
+  m_Layer: 0
+  m_Name: JetRepairSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5695390035582261554
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823264643940799428}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.48910332, y: 4.9482965, z: -0.06594503}
+  m_LocalScale: {x: 0.33333334, y: 1.8298626, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1166620917110207198}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7124585777936682102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823264643940799428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c84bbd6d85c14aa8ba24f7862b437f7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Feedback.ActionFeedbackPlayer
+  feedbacks: []
+  audioSource: {fileID: 0}
+  animator: {fileID: 0}
+  effectSpawnPoint: {fileID: 0}
+  spatialSounds: 0
+  logMissingActions: 0
+  loopSource: {fileID: 0}
+  loopVolume: 1
+  loopFadeSeconds: 1.5
+--- !u!114 &7082220585535702874
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823264643940799428}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 757bef28422a4e7e931477f5b9f2d571, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Vehicles.JetRepairSystem
+  possibleParts: []
+  distinctPartsRange: {x: 2, y: 3}
+  quantityPerPartRange: {x: 1, y: 3}
+  randomSeed: 0
+  consumePartsImmediately: 1
+  rememberProgress: 1
+  promptWhenBroken: F - Teile abgeben
+  promptWhenRepaired: Jet ist repariert
 --- !u!1 &1695859639436024010
 GameObject:
   m_ObjectHideFlags: 0
@@ -59,6 +167,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -80,9 +193,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &9210614186916312112
 BoxCollider:
@@ -118,6 +233,9 @@ GameObject:
   - component: {fileID: 3834856437157872615}
   - component: {fileID: 8658658603503373240}
   - component: {fileID: 2871140291130768399}
+  - component: {fileID: 6243539943240065228}
+  - component: {fileID: 1545314770694195456}
+  - component: {fileID: 5284729929484185178}
   m_Layer: 0
   m_Name: BrokenJetPlaceholder
   m_TagString: Untagged
@@ -138,6 +256,11 @@ Transform:
   m_LocalScale: {x: 3, y: 0.5464891, z: 4}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 908968769790466502}
+  - {fileID: 5695390035582261554}
+  - {fileID: 1177507479706148190}
+  - {fileID: 601704687747398814}
+  - {fileID: 8052035259394937348}
   - {fileID: 935414566868904520}
   - {fileID: 1387289498246636296}
   - {fileID: 6135557969995258117}
@@ -170,6 +293,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -191,9 +319,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &8658658603503373240
 BoxCollider:
@@ -234,6 +364,203 @@ MonoBehaviour:
   altitudeExit: {fileID: 11400000, guid: 9c454aa9bc4cbfb4fa847bd37d4b3716, type: 2}
   altitudeBuffer: 100
   climbDurationSeconds: 15
+--- !u!82 &6243539943240065228
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2764082734867638211}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+--- !u!114 &1545314770694195456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2764082734867638211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c84bbd6d85c14aa8ba24f7862b437f7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Feedback.ActionFeedbackPlayer
+  feedbacks:
+  - action: 54
+    sounds: []
+    volume: 0.3
+    pitchRange: {x: 0, y: 10}
+    animatorTrigger: 
+    animatorBool: 
+    animatorBoolValue: 0
+    effectPrefab: {fileID: 0}
+    effectLifetime: 0
+    delay: 0
+  - action: 56
+    sounds: []
+    volume: 0.3
+    pitchRange: {x: 0, y: 10}
+    animatorTrigger: 
+    animatorBool: 
+    animatorBoolValue: 0
+    effectPrefab: {fileID: 0}
+    effectLifetime: 0
+    delay: 0
+  - action: 59
+    sounds: []
+    volume: 0.3
+    pitchRange: {x: 0, y: 10}
+    animatorTrigger: 
+    animatorBool: 
+    animatorBoolValue: 0
+    effectPrefab: {fileID: 0}
+    effectLifetime: 0
+    delay: 0
+  - action: 60
+    sounds: []
+    volume: 0.3
+    pitchRange: {x: 0, y: 10}
+    animatorTrigger: 
+    animatorBool: 
+    animatorBoolValue: 0
+    effectPrefab: {fileID: 0}
+    effectLifetime: 0
+    delay: 0
+  audioSource: {fileID: 6243539943240065228}
+  animator: {fileID: 0}
+  effectSpawnPoint: {fileID: 0}
+  spatialSounds: 1
+  logMissingActions: 0
+  loopSource: {fileID: 6243539943240065228}
+  loopVolume: 1
+  loopFadeSeconds: 1.5
+--- !u!114 &5284729929484185178
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2764082734867638211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7984765dce4629a909b43408eed2b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Vehicles.JetController
+  flightProfile: {fileID: 11400000, guid: 5cf24d9958576e04d9f395f73b313473, type: 2}
+  visualRoot: {fileID: 8052035259394937348}
+  cockpitCameraPoint: {fileID: 8198405349393783735}
+  thrusterPoint: {fileID: 897455032847164333}
+  repairSystem: {fileID: 7082220585535702874}
+  weaponSystem: {fileID: 2018219928093573879}
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4032
+  ignoreLayers:
+    serializedVersion: 2
+    m_Bits: 1
+  placePlayerOnExit: 1
+  exitOffsetDistance: 4
+  keepEngineRunningAfterExit: 0
+  interactExitKey: 102
+  throttleUpKey: 119
+  throttleDownKey: 115
+  pitchUpKey: 273
+  pitchDownKey: 274
+  yawLeftKey: 97
+  yawRightKey: 100
+  rollLeftKey: 113
+  rollRightKey: 101
+  ascendKey: 32
+  descendKey: 306
+  afterburnerKey: 304
 --- !u!1 &3789592539827330900
 GameObject:
   m_ObjectHideFlags: 0
@@ -293,6 +620,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -314,9 +646,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &2877897674810018146
 BoxCollider:
@@ -339,6 +673,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1.0000001}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &3916983995823360692
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2656880031093705276}
+  m_Layer: 0
+  m_Name: MuzzlePoints
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2656880031093705276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3916983995823360692}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8052035259394937348}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6007763332234396030
 GameObject:
   m_ObjectHideFlags: 0
@@ -398,6 +763,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -419,9 +789,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &8555750898815213203
 BoxCollider:
@@ -444,6 +816,280 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1.0000001}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &6576413327897347781
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 908968769790466502}
+  m_Layer: 0
+  m_Name: ActionFeedbackPlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &908968769790466502
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6576413327897347781}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.137, y: 4.9482965, z: 0.112}
+  m_LocalScale: {x: 0.33333334, y: 1.8298626, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1166620917110207198}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &6931469992589617072
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 897455032847164333}
+  m_Layer: 0
+  m_Name: ThrusterPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &897455032847164333
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6931469992589617072}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8052035259394937348}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7212011930847486840
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 601704687747398814}
+  - component: {fileID: 4003415024697598915}
+  - component: {fileID: 8555310955526387127}
+  - component: {fileID: 3386958052223454143}
+  m_Layer: 0
+  m_Name: JetCutsceneTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &601704687747398814
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7212011930847486840}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.48910332, y: 4.9482965, z: -0.06594503}
+  m_LocalScale: {x: 0.33333334, y: 1.8298626, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1166620917110207198}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4003415024697598915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7212011930847486840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c84bbd6d85c14aa8ba24f7862b437f7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Feedback.ActionFeedbackPlayer
+  feedbacks: []
+  audioSource: {fileID: 0}
+  animator: {fileID: 0}
+  effectSpawnPoint: {fileID: 0}
+  spatialSounds: 0
+  logMissingActions: 0
+  loopSource: {fileID: 0}
+  loopVolume: 1
+  loopFadeSeconds: 1.5
+--- !u!114 &8555310955526387127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7212011930847486840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f7984765dce4629a909b43408eed2b9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Vehicles.JetController
+  flightProfile: {fileID: 0}
+  visualRoot: {fileID: 0}
+  cockpitCameraPoint: {fileID: 0}
+  thrusterPoint: {fileID: 0}
+  repairSystem: {fileID: 0}
+  weaponSystem: {fileID: 0}
+  collisionLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  ignoreLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  placePlayerOnExit: 1
+  exitOffsetDistance: 4
+  keepEngineRunningAfterExit: 0
+  interactExitKey: 102
+  throttleUpKey: 119
+  throttleDownKey: 115
+  pitchUpKey: 273
+  pitchDownKey: 274
+  yawLeftKey: 97
+  yawRightKey: 100
+  rollLeftKey: 113
+  rollRightKey: 101
+  ascendKey: 32
+  descendKey: 306
+  afterburnerKey: 304
+--- !u!114 &3386958052223454143
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7212011930847486840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bac9082ba15a46fdbd1a849505eedb4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Vehicles.JetCutsceneTrigger
+  firstBoardingCutscene: {fileID: 0}
+  subsequentBoardingCutscene: {fileID: 0}
+  repairedCutscene: {fileID: 0}
+  cutscenePlayer: {fileID: 0}
+  repairSystem: {fileID: 0}
+  oncePerSession: 1
+  delayControlUntilCutsceneDone: 0
+--- !u!1 &8069498872603801400
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1177507479706148190}
+  - component: {fileID: 4207754389987975361}
+  - component: {fileID: 2018219928093573879}
+  m_Layer: 0
+  m_Name: JetWeaponSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1177507479706148190
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8069498872603801400}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.061, y: 0.15, z: 0.525}
+  m_LocalScale: {x: 0.33333334, y: 1.8298626, z: 0.25}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1166620917110207198}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4207754389987975361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8069498872603801400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c84bbd6d85c14aa8ba24f7862b437f7b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Feedback.ActionFeedbackPlayer
+  feedbacks: []
+  audioSource: {fileID: 0}
+  animator: {fileID: 0}
+  effectSpawnPoint: {fileID: 0}
+  spatialSounds: 0
+  logMissingActions: 0
+  loopSource: {fileID: 0}
+  loopVolume: 1
+  loopFadeSeconds: 1.5
+--- !u!114 &2018219928093573879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8069498872603801400}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89dc2cc29bb04b7d903aafd4574deb12, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Vehicles.JetWeaponSystem
+  weaponSlots:
+  - slotName: M134
+    enabled: 1
+    ammoType: {fileID: 11400000, guid: f0768dbce2fda9e49902f8e6e62b53e9, type: 2}
+    magazineSize: 10000
+    spareMagazines: 1
+    reloadSeconds: 10
+    roundsPerMinute: 3000
+    spreadDegrees: 0.1
+    maxRange: 1000
+    damageMultiplier: 2
+    pelletsPerShot: 1
+    isRocket: 0
+    rocketPrefab: {fileID: 0}
+    rocketSpeed: 0
+    explosionRadius: 0
+    explosionDamage: 0
+    homingStrength: 0
+    muzzlePoints:
+    - {fileID: 2656880031093705276}
+    muzzleContainer: {fileID: 2656880031093705276}
+    fireAction: 3
+    reloadAction: 8
+    emptyAction: 6
+    rocketFireAction: 4
+    fireKey: 324
+  hittableLayers:
+    serializedVersion: 2
+    m_Bits: 4032
+  aimCamera: {fileID: 0}
+  convergeFromCamera: 0
+  muzzleFlashPrefab: {fileID: 0}
+  muzzleFlashLifetime: 0.1
 --- !u!1 &8546093406470973772
 GameObject:
   m_ObjectHideFlags: 0
@@ -503,6 +1149,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -524,9 +1175,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &5141423996415238310
 BoxCollider:
@@ -608,6 +1261,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -629,9 +1287,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!65 &7594658966999151429
 BoxCollider:
@@ -654,3 +1314,34 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1.0000001}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &9157464864752703059
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8198405349393783735}
+  m_Layer: 0
+  m_Name: CockpitCameraPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8198405349393783735
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9157464864752703059}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8052035259394937348}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

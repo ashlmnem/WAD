@@ -49,6 +49,17 @@ namespace WAD.Entities
         private void OnEnable()
         {
             if (weaponController == null) weaponController = GetComponent<WeaponController>();
+
+            // Ohne diese Pruefung wirft OnEnable eine NullReferenceException, wenn
+            // die Komponente ohne WeaponController aktiviert wird; danach bliebe die
+            // Waffe zudem dauerhaft von OnFire abgekoppelt.
+            if (weaponController == null)
+            {
+                Debug.LogWarning($"[Entity001srp:{gameObject.name}] Kein WeaponController auf demselben Objekt - Entity-Logik ist deaktiviert.");
+                return;
+            }
+
+            weaponController.OnFired -= OnFire; // gegen Doppel-Abos bei mehrfachem Enable
             weaponController.OnFired += OnFire;
         }
 
@@ -103,24 +114,35 @@ namespace WAD.Entities
             bool becomesM27 = Random.value < chanceForM27;
             GameObject resultPrefab = becomesM27 ? m27Prefab : staccato9Prefab;
 
-            if (resultPrefab != null && weaponHolder != null)
+            if (resultPrefab == null)
             {
-                GameObject instance = Instantiate(resultPrefab);
-                var newController = instance.GetComponent<WeaponController>();
-
-                if (newController != null)
-                {
-                    weaponHolder.PickUpWeapon(newController); // wirft automatisch WireRuntimeReferences an, inkl. WeaponRecoil.cameraLook
-                }
+                Debug.LogWarning($"[Entity001srp:{gameObject.name}] Result-Prefab ({(becomesM27 ? "M27 Prefab" : "Staccato9 Prefab")}) ist nicht zugewiesen - Waffe bleibt unveraendert.");
+                return;
             }
-            else if (weaponHolder == null)
+
+            if (weaponHolder == null)
             {
                 Debug.LogWarning($"[Entity001srp:{gameObject.name}] Keine Waffe ausgeruestet - AutoWireReferences() wurde nicht aufgerufen? Wurde die Waffe wirklich ueber PickUpWeapon() ausgeruestet?");
+                return;
             }
-            else
+
+            GameObject instance = Instantiate(resultPrefab);
+            var newController = instance.GetComponent<WeaponController>();
+
+            if (newController == null)
             {
-                Debug.LogWarning($"[Entity001srp:{gameObject.name}] Result-Prefab ({(becomesM27 ? "M27 Prefab" : "Staccato9 Prefab")}) ist nicht zugewiesen!");
+                // Ohne Ersatz darf die Flare-Gun NICHT zerstoert werden - sonst
+                // bleibt der Spieler ohne Waffe zurueck.
+                Debug.LogError($"[Entity001srp:{gameObject.name}] Result-Prefab hat keinen WeaponController - Transformation abgebrochen.");
+                Destroy(instance);
+                return;
             }
+
+            // Erst die alte Waffe aus den Slots nehmen (sonst zeigt der Slot auf
+            // ein zerstoertes Objekt und belegt dauerhaft einen Platz), dann die
+            // neue aufnehmen, dann das alte Objekt zerstoeren.
+            weaponHolder.RemoveWeapon(GetComponent<WeaponController>());
+            weaponHolder.PickUpWeapon(newController);
 
             Destroy(gameObject);
         }

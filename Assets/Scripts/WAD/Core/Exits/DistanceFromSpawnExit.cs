@@ -14,6 +14,13 @@ namespace WAD.Core
 
         public override bool IsSatisfied(RunStateManager state) => false;
 
+        public override void ResetState()
+        {
+            base.ResetState();
+            spawnCaptured = false;
+            spawnPosition = Vector3.zero;
+        }
+
         public bool CheckDistance(Vector3 playerPosition)
         {
             if (!spawnCaptured)

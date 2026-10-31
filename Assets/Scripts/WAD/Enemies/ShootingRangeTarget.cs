@@ -24,11 +24,20 @@ namespace WAD.ShootingRange
         private AudioSource audioSource;
         private bool isDown;
 
+        /// <summary>
+        /// Ausgangsrotation des Modells, in Awake gecacht. Vorher richtete die
+        /// Reset-Phase auf Quaternion.identity aus - ein Ziel, dessen Modell
+        /// nicht bei Identitaet startet, verdrehte sich dadurch bei jedem
+        /// Treffer ein Stueck weiter.
+        /// </summary>
+        private Quaternion initialLocalRotation = Quaternion.identity;
+
         public event System.Action<ShootingRangeTarget> OnHit;
 
         private void Awake()
         {
             audioSource = GetComponent<AudioSource>();
+            if (visualPivot != null) initialLocalRotation = visualPivot.localRotation;
         }
 
         public void ApplyDamage(float amount, Vector3 hitPoint, Vector3 hitDirection)
@@ -40,7 +49,8 @@ namespace WAD.ShootingRange
 
             if (audioSource != null && hitSound != null) audioSource.PlayOneShot(hitSound);
 
-            if (!isDown)
+            // StartCoroutine wirft, wenn das Objekt inaktiv ist.
+            if (!isDown && isActiveAndEnabled)
             {
                 StartCoroutine(FallAndResetRoutine());
             }
@@ -69,15 +79,17 @@ namespace WAD.ShootingRange
             if (visualPivot != null)
             {
                 Quaternion downRot = visualPivot.localRotation;
-                Quaternion upRot = Quaternion.identity;
 
                 float t = 0f;
                 while (t < fallDuration)
                 {
                     t += Time.deltaTime;
-                    visualPivot.localRotation = Quaternion.Slerp(downRot, upRot, t / fallDuration);
+                    visualPivot.localRotation = Quaternion.Slerp(downRot, initialLocalRotation, t / fallDuration);
                     yield return null;
                 }
+
+                // Rundungsfehler der Interpolation ausgleichen.
+                visualPivot.localRotation = initialLocalRotation;
             }
 
             isDown = false;

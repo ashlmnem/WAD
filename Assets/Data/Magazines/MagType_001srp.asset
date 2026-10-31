@@ -12,10 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
   m_Name: MagType_001srp
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazineTypeSO
-  magazineTypeId: 
+  magazineTypeId: 001srp
   displayName: Lightrocket
   icon: {fileID: 0}
+  description: 
+  magazineClass: 7
   ammoType: {fileID: 11400000, guid: f8e3ef8cdd9baea4bab76a9b7f6b554f, type: 2}
   baseCapacity: 1
   emptyWeightKg: 0.15
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
   groundModelPrefab: {fileID: 0}
+  attachmentVisualPrefab: {fileID: 0}

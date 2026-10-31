@@ -126,7 +126,8 @@ MonoBehaviour:
   weaponSocket: {fileID: 7997328255801568670}
   movementController: {fileID: 8100776886399052573}
   playerCamera: {fileID: 6677635826815346522}
-  cameraLook: {fileID: 0}
+  cameraLook: {fileID: 755817344534457737}
+  playerLean: {fileID: 0}
   maxWeaponSlots: 2
   equippedWeapons: []
 --- !u!114 &6732290555380524132
@@ -178,9 +179,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inventory: {fileID: 6732290555380524132}
-  panelRoot: {fileID: 0}
+  panelRoot: {fileID: 8576122408225319014, guid: a965188259e1307429dfebe4f8b36386,
+    type: 3}
   contentParent: {fileID: 0}
-  slotPrefab: {fileID: 2134758725980796406, guid: 71761fc087df1af4a995fdcb5c4d231d,
+  slotPrefab: {fileID: 3236429548262183056, guid: 48f2fb5eeaff8df4f8b9a04ac480e896,
     type: 3}
   weightText: {fileID: 0}
   toggleKey: 9
@@ -197,12 +199,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponHolder: {fileID: 1556950061433652186}
-  panelRoot: {fileID: 0}
+  panelRoot: {fileID: 8576122408225319014, guid: a965188259e1307429dfebe4f8b36386,
+    type: 3}
   weaponNameText: {fileID: 0}
   ammoTypeText: {fileID: 0}
   magazineFillText: {fileID: 0}
   reserveMagazinesText: {fileID: 0}
   inspectKey: 118
+  reserveListContent: {fileID: 0}
+  reserveEntryPrefab: {fileID: 0}
+  rebuildOnlyOnWeaponChange: 1
+  magazineCatalog: {fileID: 0}
+  catalogListContent: {fileID: 0}
+  filterCatalogToWeapon: 1
+  noMagazineLabel: Kein Magazin geladen
+  noReserveLabel: Keine Reserve-Magazine
+  capacityUnknown: '-'
 --- !u!82 &106956131961202373
 AudioSource:
   m_ObjectHideFlags: 0
@@ -315,6 +327,7 @@ MonoBehaviour:
   movementController: {fileID: 8100776886399052573}
   playerHealth: {fileID: 5655560355844633161}
   characterController: {fileID: 9001848776668431473}
+  feedback: {fileID: 0}
   footstepSoundsWalk:
   - {fileID: 8300000, guid: 66cd39d8e1f07c943bcb5402878f6a3d, type: 3}
   - {fileID: 8300000, guid: f6309f8851ffd48498569cd4b52955e3, type: 3}
@@ -379,9 +392,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b388dadbda2f9c84ba28368f9651460f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxHealth: 100
   inventory: {fileID: 6732290555380524132}
   movementController: {fileID: 8100776886399052573}
+  limbHealthSystem: {fileID: 0}
+  maxHealth: 100
 --- !u!1 &1129923444180768639
 GameObject:
   m_ObjectHideFlags: 0
@@ -825,6 +839,7 @@ GameObject:
   - component: {fileID: 312653779027154494}
   - component: {fileID: 2117042881402122569}
   - component: {fileID: 755817344534457737}
+  - component: {fileID: 2302701847060107344}
   m_Layer: 10
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -971,6 +986,29 @@ MonoBehaviour:
   enableLookSmoothing: 1
   lookSmoothTime: 0.03
   recoilRecoverySpeed: 6
+  reloadTiltDegrees: 6
+  reloadRollDegrees: 3
+  defaultReloadAnimationDuration: 1.5
+--- !u!114 &2302701847060107344
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6197007842390211901}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d391c9702b5b416b898f9b7e41b2e018, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.CameraFx.CameraAnimationController
+  profile: {fileID: 11400000, guid: 5e406ab5e33a00749821eae7d5b0bfb6, type: 2}
+  movement: {fileID: 0}
+  cameraLook: {fileID: 0}
+  weaponHolder: {fileID: 0}
+  playerLean: {fileID: 0}
+  playerHealth: {fileID: 0}
+  disabled: 0
+  useRelativeOffsets: 1
 --- !u!1 &7968070148220582542
 GameObject:
   m_ObjectHideFlags: 0

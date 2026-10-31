@@ -12,6 +12,13 @@ namespace WAD.Core
 
         public override bool IsSatisfied(RunStateManager state) => false;
 
+        public override void ResetState()
+        {
+            base.ResetState();
+            spawnCaptured = false;
+            spawnHeight = 0f;
+        }
+
         public bool CheckAltitude(Vector3 playerPosition)
         {
             if (!spawnCaptured)

@@ -10,6 +10,12 @@ namespace WAD.Core
 
         public override bool IsSatisfied(RunStateManager state) => used;
 
+        public override void ResetState()
+        {
+            base.ResetState();
+            used = false;
+        }
+
         public void MarkUsed() => used = true;
     }
 }

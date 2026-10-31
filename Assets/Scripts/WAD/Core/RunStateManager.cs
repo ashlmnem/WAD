@@ -18,6 +18,14 @@ namespace WAD.Core
         [Header("Run-Fortschritt")]
         public int currentLevelIndex = 1;
         public int levelsSurvivedThisRun = 0;
+        [Tooltip("Wie viele Gegner der Spieler in diesem Run bereits getoetet hat (fuer Taskmaster-Aufgaben)")]
+        public int killsThisRun = 0;
+
+        /// <summary> Wird vom Gegner-Tod aufgerufen (siehe EnemyController). </summary>
+        public void RegisterKill()
+        {
+            killsThisRun++;
+        }
 
         [Header("Story-Flags (levelübergreifende Bedingungen)")]
         // Beispiel: Level 2 -> beeinflusst Level 5 Exit 3/4
@@ -77,6 +85,7 @@ namespace WAD.Core
             jetFuel = 0f;
             currentLevelIndex = 1;
             levelsSurvivedThisRun = 0;
+            killsThisRun = 0;
             // TODO: Szenenwechsel zurueck zum Hideout/Hauptmenue
         }
 
@@ -93,6 +102,23 @@ namespace WAD.Core
             jetFuel = 0f;
             currentLevelIndex = 1;
             levelsSurvivedThisRun = 0;
+            killsThisRun = 0;
+        }
+
+        /// <summary>
+        /// Beginnt einen frischen Run vom Hauptmenue aus. WICHTIG: Ohne diesen
+        /// Aufruf schleppt ein neuer Run den Zustand des vorherigen mit, weil
+        /// dieser Manager per DontDestroyOnLoad Szenenwechsel ueberlebt.
+        /// </summary>
+        public void BeginNewRun()
+        {
+            carriedItems.Clear();
+            flags.Clear();
+            jetFuel = 0f;
+            currentLevelIndex = 1;
+            levelsSurvivedThisRun = 0;
+            killsThisRun = 0;
+            Debug.Log("[RunState] Neuer Run gestartet.");
         }
 
         public void AdvanceToLevel(int levelIndex)

@@ -20,6 +20,12 @@ namespace WAD.Menu
 
         private void Start()
         {
+            if (weaponHolder == null)
+            {
+                Debug.LogWarning("[LoadoutApplier] 'Weapon Holder' ist nicht zugewiesen - Loadout kann nicht angewendet werden.");
+                return;
+            }
+
             if (WeaponLoadoutManager.Instance == null || WeaponLoadoutManager.Instance.selectedWeapon == null)
             {
                 Debug.Log("[LoadoutApplier] Kein Loadout gewaehlt - Spieler startet ohne vorkonfigurierte Waffe.");
@@ -31,9 +37,21 @@ namespace WAD.Menu
 
         private void SpawnAndEquip(WeaponSO weaponData)
         {
-            GameObject instance = weaponData.viewmodelPrefab != null
-                ? Instantiate(weaponData.viewmodelPrefab)
-                : Instantiate(weaponControllerBasePrefab);
+            // Fallback: weaponData.viewmodelPrefab ist der Normalfall. Nur wenn
+            // weder das noch das Basis-Prefab gesetzt ist, gibt es nichts zu bauen -
+            // Instantiate(null) wuerde eine ArgumentException werfen.
+            GameObject sourcePrefab = weaponData.viewmodelPrefab != null
+                ? weaponData.viewmodelPrefab
+                : weaponControllerBasePrefab;
+
+            if (sourcePrefab == null)
+            {
+                Debug.LogWarning($"[LoadoutApplier] Weder 'Viewmodel Prefab' an '{weaponData.name}' noch " +
+                                 "'Weapon Controller Base Prefab' ist zugewiesen - Waffe kann nicht erzeugt werden.");
+                return;
+            }
+
+            GameObject instance = Instantiate(sourcePrefab);
 
             var controller = instance.GetComponent<WeaponController>();
             if (controller == null) controller = instance.AddComponent<WeaponController>();
@@ -53,6 +71,12 @@ namespace WAD.Menu
             if (recoil != null && cameraLook != null)
             {
                 recoil.cameraLook = cameraLook;
+            }
+
+            // Aus demselben Grund: die Nachlade-Kamera-Animation in WeaponController.
+            if (controller.cameraLook == null)
+            {
+                controller.cameraLook = cameraLook;
             }
 
             weaponHolder.PickUpWeapon(controller);

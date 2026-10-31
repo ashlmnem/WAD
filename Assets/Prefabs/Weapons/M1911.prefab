@@ -373,7 +373,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponData: {fileID: 11400000, guid: b4141dcbe66604547925759329d56d5a, type: 2}
-  muzzlePoint: {fileID: 0}
+  muzzlePoint: {fileID: 4529887841977159539}
   playerCamera: {fileID: 0}
   movementController: {fileID: 0}
   attachments: {fileID: 5117750111538203264}

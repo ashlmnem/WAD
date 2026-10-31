@@ -12,10 +12,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
   m_Name: MagType_AKM_60 Rounds
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazineTypeSO
-  magazineTypeId: 
+  magazineTypeId: akm_60
   displayName: S60
   icon: {fileID: 0}
+  description: 
+  magazineClass: 0
   ammoType: {fileID: 11400000, guid: d41904a7c37dcb24d82aebbe05d09ada, type: 2}
   baseCapacity: 60
-  emptyWeightKg: 1.5
-  groundModelPrefab: {fileID: 0}
+  emptyWeightKg: 0.8
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
+  groundModelPrefab: {fileID: 147388564907428901, guid: 5cd383a21777bb147a62022ff0a2a5a7,
+    type: 3}
+  attachmentVisualPrefab: {fileID: 0}

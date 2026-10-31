@@ -34,6 +34,7 @@ namespace WAD.Inventory
                 {
                     var magazine = new Magazine(magazineType, currentRounds);
                     weapon.reserveMagazines.Add(magazine);
+                    weapon.NotifyAmmoChanged(); // HUD sofort aktualisieren, nicht erst beim naechsten Schuss
                     Destroy(gameObject);
                     return true;
                 }

@@ -41,6 +41,17 @@ namespace WAD.Weapons.UI
             }
         }
 
+        private void OnDestroy()
+        {
+            // Ohne dieses Abmelden blieb der Handler auf einer zerstoerten Waffe
+            // haengen (Delegate-Leck).
+            if (currentlySubscribed != null)
+            {
+                currentlySubscribed.OnAmmoChanged -= UpdateText;
+                currentlySubscribed = null;
+            }
+        }
+
         private void UpdateText(int current, int reserve)
         {
             if (ammoText != null) ammoText.text = $"{current} / {reserve}";

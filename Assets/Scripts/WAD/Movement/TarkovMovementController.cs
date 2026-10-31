@@ -77,6 +77,12 @@ namespace WAD.Player
         public bool IsSprinting { get; private set; }
         public bool IsCrouching => isCrouching;
 
+        /// <summary> Aktuelle horizontale Geschwindigkeit in m/s (fuer Kamera-Animation, Audio, HUD). </summary>
+        public float CurrentSpeed => currentVelocity.magnitude;
+
+        /// <summary> Gewuenschte Geschwindigkeit dieses Frames in m/s. </summary>
+        public float TargetSpeed => CalculateTargetSpeed(GetMoveInput());
+
         private void Awake()
         {
             controller = GetComponent<CharacterController>();
@@ -189,7 +195,10 @@ namespace WAD.Player
                 return Mathf.Max(0.05f, 1f - weightSpeedPenaltyFactor - 0.2f);
             }
 
-            float t = (currentWeight - weightThreshold) / (maxWeight - weightThreshold);
+            // InverseLerp statt eigener Division: liefert bei
+            // maxWeight == weightThreshold kein NaN (das haette ueber
+            // controller.Move(NaN) den Transform zerstoert).
+            float t = Mathf.InverseLerp(weightThreshold, maxWeight, currentWeight);
             return Mathf.Lerp(1f, 1f - weightSpeedPenaltyFactor, t);
         }
 

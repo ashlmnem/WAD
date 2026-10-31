@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00fa657be47943a9922bfffb595a9515, type: 3}
+  m_Name: PostProcessingCameraProfile
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.CameraFx.FoundFootageProfile
+  grainIntensity: 0.45
+  grainResponse: 1.2
+  grainEnabled: 1
+  vignetteEnabled: 1
+  vignetteIntensity: 0.42
+  vignetteSmoothness: 0.45
+  vignetteColor: {r: 0, g: 0, b: 0, a: 1}
+  colorEnabled: 1
+  postExposure: 0
+  contrast: 12
+  saturation: -22
+  hueShift: -6
+  colorFilter: {r: 0.2830189, g: 0, b: 0.041255414, a: 1}
+  chromaticAberrationEnabled: 1
+  chromaticAberration: 0.12
+  lensDistortionEnabled: 0
+  lensIntensity: -0.08
+  bloomEnabled: 1
+  bloomIntensity: 0.35
+  bloomThreshold: 1.1
+  motionBlurEnabled: 0
+  motionBlurIntensity: 0.35
+  handheldIntensity: 0

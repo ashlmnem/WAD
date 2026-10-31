@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83307a2743f64e9da56de39c32a148c5, type: 3}
+  m_Name: JetFlight_VTOL
+  m_EditorClassIdentifier: Assembly-CSharp::WAD.Vehicles.JetFlightProfile
+  baseThrust: 22
+  maxForwardSpeed: 160
+  brakeAcceleration: 40
+  afterburnerMultiplier: 1.8
+  throttleResponse: 1.2
+  yawRate: 45
+  pitchRate: 60
+  rollRate: 120
+  controlResponse: 3.5
+  rollAutoLevel: 0.35
+  gravityInfluence: 0.25
+  verticalThrust: 14
+  groundProximity: 2.5
+  collisionRadius: 3
+  crashSpeedThreshold: 45
+  engineStartupSeconds: 4
+  engineShutdownSeconds: 2
+  canVerticalTakeOff: 1
+  takeoffSpeed: 45
+  cameraLocalOffset: {x: 0, y: 1.6, z: 0.6}
+  cameraFOV: 60
+  fuelBurnPerSecond: 0
+  afterburnerBurnsExtra: 1

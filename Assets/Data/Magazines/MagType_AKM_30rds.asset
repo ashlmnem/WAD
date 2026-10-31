@@ -12,11 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98a7bf739e2116646a15344310a81e2c, type: 3}
   m_Name: MagType_AKM_30rds
   m_EditorClassIdentifier: 
-  magazineTypeId: 
+  magazineTypeId: akm_30
   displayName: 6L1
   icon: {fileID: 0}
+  description: 
+  magazineClass: 0
   ammoType: {fileID: 11400000, guid: d41904a7c37dcb24d82aebbe05d09ada, type: 2}
   baseCapacity: 30
   emptyWeightKg: 0.25
+  reloadTimeMultiplier: 1
+  spreadMultiplier: 1
   groundModelPrefab: {fileID: 147388564907428901, guid: 5cd383a21777bb147a62022ff0a2a5a7,
+    type: 3}
+  attachmentVisualPrefab: {fileID: 147388564907428901, guid: 5cd383a21777bb147a62022ff0a2a5a7,
     type: 3}
