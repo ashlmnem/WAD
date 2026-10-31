@@ -122,11 +122,38 @@ namespace WAD.Player
         {
             if (Input.GetKeyDown(KeyCode.LeftControl))
             {
+                // Aufstehen nur, wenn ueber dem Kopf Platz ist - sonst steckt man
+                // in der Decke (Depenetration katapultiert den Spieler weg).
+                if (isCrouching && !HasHeadroomToStand()) return;
+
                 isCrouching = !isCrouching;
                 // Hoehe/Center werden nicht mehr instant gesetzt, sondern
                 // in UpdateControllerHeight() sanft angeglichen - vermeidet
                 // Kollisions-Depenetration-Sprung beim Aufstehen.
             }
+        }
+
+        private static readonly RaycastHit[] headroomHits = new RaycastHit[8];
+
+        private bool HasHeadroomToStand()
+        {
+            float missingHeight = standingControllerHeight - controller.height;
+            if (missingHeight <= 0.01f) return true;
+
+            float radius = controller.radius * 0.9f;
+            Vector3 origin = transform.position + Vector3.up * Mathf.Max(radius, controller.height - radius);
+
+            int count = Physics.SphereCastNonAlloc(origin, radius, Vector3.up, headroomHits,
+                missingHeight + 0.05f, ~0, QueryTriggerInteraction.Ignore);
+
+            for (int i = 0; i < count; i++)
+            {
+                // Eigene Collider (Hitboxen, Waffen, Kamera) zaehlen nicht als Decke
+                if (headroomHits[i].collider.transform.root == transform.root) continue;
+                return false;
+            }
+
+            return true;
         }
 
         private void UpdateControllerHeight()
@@ -245,7 +272,7 @@ namespace WAD.Player
                 if (Input.GetButtonDown("Jump") && canJump && !isCrouching)
                 {
                     verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-                    currentStamina -= 10f; // Springen kostet Ausdauer, wie in Tarkov
+                    currentStamina = Mathf.Max(0f, currentStamina - 10f); // Springen kostet Ausdauer, wie in Tarkov
                 }
             }
             else

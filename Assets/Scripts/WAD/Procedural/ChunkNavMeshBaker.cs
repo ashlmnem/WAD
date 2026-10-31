@@ -4,44 +4,19 @@ using Unity.AI.Navigation;
 namespace WAD.Procedural
 {
     /// <summary>
-    /// Liegt auf jedem Chunk-Prefab (neben ProceduralGridGenerator's Chunk-Root).
-    /// Backt beim Aktivieren automatisch ein lokales NavMesh fuer diesen Chunk.
-    /// Mehrere Chunk-NavMeshes mit derselben Agent Type ID verschmelzen zu einer
-    /// durchgehend begehbaren Flaeche, sobald benachbarte Chunks geladen sind.
+    /// LEGACY-Platzhalter. Dieses Skript hat frueher bei jedem Aktivieren das
+    /// NavMesh des Chunks gebacken - zusaetzlich zum ProceduralGridGenerator,
+    /// sodass jeder Chunk doppelt (und bei jedem Recyceln erneut) gebacken wurde.
     ///
-    /// WICHTIG: Braucht das "AI Navigation"-Package (Package Manager).
-    /// Jedes Chunk-Prefab braucht eine NavMeshSurface-Komponente (wird hier
-    /// automatisch hinzugefuegt, falls sie fehlt).
+    /// Das Backen uebernimmt jetzt ausschliesslich der ProceduralGridGenerator
+    /// (einmal pro Chunk-Instanz). Die Komponente bleibt nur bestehen, damit die
+    /// vorhandenen Chunk-Prefabs keine "Missing Script"-Eintraege bekommen.
+    /// Sie kann in den Prefabs gefahrlos entfernt werden; danach darf auch
+    /// diese Datei geloescht werden.
     /// </summary>
     [RequireComponent(typeof(NavMeshSurface))]
+    [AddComponentMenu("")] // nicht mehr im Add-Component-Menue anbieten
     public class ChunkNavMeshBaker : MonoBehaviour
     {
-        private NavMeshSurface surface;
-
-        private void Awake()
-        {
-            surface = GetComponent<NavMeshSurface>();
-            surface.collectObjects = CollectObjects.Children;
-            // Collider-basierte Geometrie statt Mesh-Geometrie: vermeidet den
-            // "does not allow read access"-Fehler beim Runtime-Baking, da
-            // Collider-Formen (BoxCollider etc.) keine lesbaren Mesh-Daten
-            // brauchen - wichtig gerade fuer die Platzhalter-Primitives.
-            surface.useGeometry = UnityEngine.AI.NavMeshCollectGeometry.PhysicsColliders;
-        }
-
-        private void OnEnable()
-        {
-            // Ein Frame warten, damit alle Kind-Objekte (Ruinen, Strassen etc.)
-            // sicher aktiv/positioniert sind, bevor gebackt wird.
-            Invoke(nameof(Bake), 0.01f);
-        }
-
-        private void Bake()
-        {
-            if (surface != null)
-            {
-                surface.BuildNavMesh();
-            }
-        }
     }
 }

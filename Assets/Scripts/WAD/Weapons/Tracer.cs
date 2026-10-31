@@ -21,23 +21,41 @@ namespace WAD.Weapons
         private float traveled;
         private float effectiveSpeed;
 
+        private static readonly System.Collections.Generic.Dictionary<Color, Material> fallbackMaterials =
+            new System.Collections.Generic.Dictionary<Color, Material>();
+
+        private static Material GetFallbackMaterial(Color color)
+        {
+            if (fallbackMaterials.TryGetValue(color, out Material cached) && cached != null) return cached;
+
+            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) shader = Shader.Find("Unlit/Color");
+            if (shader == null) shader = Shader.Find("Sprites/Default");
+
+            Material mat = new Material(shader) { name = "Tracer_Fallback (runtime)" };
+            if (mat.HasProperty("_Color")) mat.color = color;
+            if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", color);
+
+            fallbackMaterials[color] = mat;
+            return mat;
+        }
+
+        // Bei deaktivierter Domain-Reload-Option (Enter Play Mode Options) wuerden die statischen Materialien sonst Play-Sessions ueberleben.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => fallbackMaterials.Clear();
+
         private void Awake()
         {
             if (lineRenderer == null) lineRenderer = GetComponent<LineRenderer>();
 
             if (lineRenderer != null)
             {
-                // Falls kein Material gesetzt ist: automatisch ein sichtbares erzeugen
+                // Falls kein Material gesetzt ist: ein gemeinsames, sichtbares Fallback-Material
+                // verwenden. Vorher wurde pro Tracer (= pro Schuss) ein NEUES Material erzeugt
+                // und nie zerstoert - ein stetiges Speicherleck bei Dauerfeuer.
                 if (lineRenderer.sharedMaterial == null)
                 {
-                    Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-                    if (shader == null) shader = Shader.Find("Unlit/Color");
-                    if (shader == null) shader = Shader.Find("Sprites/Default");
-
-                    Material mat = new Material(shader);
-                    if (mat.HasProperty("_Color")) mat.color = tracerColor;
-                    if (mat.HasProperty("_BaseColor")) mat.SetColor("_BaseColor", tracerColor);
-                    lineRenderer.material = mat;
+                    lineRenderer.sharedMaterial = GetFallbackMaterial(tracerColor);
                 }
 
                 if (lineRenderer.startWidth <= 0.001f) lineRenderer.startWidth = 0.03f;

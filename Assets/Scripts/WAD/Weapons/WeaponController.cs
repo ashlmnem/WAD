@@ -60,6 +60,8 @@ namespace WAD.Weapons
         [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root. WICHTIG: bei JEDER Waffe zuweisen, nicht nur bei Waffen mit Optik!")]
         public Transform defaultIronSightAimPoint;
         public float adsPositionLerpSpeed = 10f;
+        [Tooltip("Sichtfeld (FOV) der Kamera, wenn NICHT gezielt wird. Vorher fest auf 60 verdrahtet.")]
+        public float hipFOV = 60f;
 
         // --- Zustand ---
         private float lastFireTime = -999f;
@@ -245,7 +247,7 @@ namespace WAD.Weapons
             {
                 float baseFOV = attachments != null && attachments.GetADSFOVOverride() > 0f
                     ? attachments.GetADSFOVOverride() : weaponData.adsFOV;
-                float targetFOV = IsAiming ? baseFOV : 60f;
+                float targetFOV = IsAiming ? baseFOV : hipFOV;
 
                 float adsSpeedMult = attachments != null ? attachments.GetADSSpeedMultiplier() : 1f;
                 playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, targetFOV,
@@ -305,7 +307,7 @@ namespace WAD.Weapons
         {
             if (weaponData.fireMode != FireMode.BoltAction) return;
 
-            if (!isChamberedRoundReady && Input.GetKeyDown(KeyCode.B))
+            if (!isReloading && !isChamberedRoundReady && Input.GetKeyDown(KeyCode.B))
             {
                 StartCoroutine(CycleBoltRoutine());
             }
@@ -373,7 +375,7 @@ namespace WAD.Weapons
             Collider primaryHitCollider = null;
 
             if (Physics.Raycast(playerCamera.transform.position, direction, out RaycastHit hit,
-                weaponData.maxRange, hittableLayers))
+                weaponData.maxRange, hittableLayers, QueryTriggerInteraction.Ignore))
             {
                 impactPoint = hit.point;
                 primaryHitCollider = hit.collider;
@@ -386,8 +388,9 @@ namespace WAD.Weapons
 
                 if (loadedMagazine.ammoType.impactVFXPrefab != null)
                 {
-                    Object.Instantiate(loadedMagazine.ammoType.impactVFXPrefab, hit.point,
+                    GameObject impactVfx = Instantiate(loadedMagazine.ammoType.impactVFXPrefab, hit.point,
                         Quaternion.LookRotation(hit.normal));
+                    Destroy(impactVfx, Mathf.Max(0.5f, loadedMagazine.ammoType.impactVFXLifetime));
                 }
             }
 
@@ -424,19 +427,28 @@ namespace WAD.Weapons
             }
         }
 
+        // Wiederverwendete Puffer: SphereCastAll alloziert pro Schuss ein neues Array (GC-Spikes bei Vollauto).
+        private static readonly RaycastHit[] nearMissBuffer = new RaycastHit[64];
+        private static readonly HashSet<EnemyController> nearMissEnemies = new HashSet<EnemyController>();
+
         private void NotifyNearMisses(Vector3 origin, Vector3 direction, float maxRange, Collider primaryHitCollider)
         {
-            RaycastHit[] hits = Physics.SphereCastAll(origin, nearMissDetectionRadius, direction, maxRange, hittableLayers);
+            int count = Physics.SphereCastNonAlloc(origin, nearMissDetectionRadius, direction, nearMissBuffer,
+                maxRange, hittableLayers, QueryTriggerInteraction.Ignore);
 
-            foreach (var h in hits)
+            nearMissEnemies.Clear();
+
+            for (int i = 0; i < count; i++)
             {
-                if (primaryHitCollider != null && h.collider.transform.root == primaryHitCollider.transform.root) continue;
+                Collider col = nearMissBuffer[i].collider;
+                if (col == null) continue;
+                if (primaryHitCollider != null && col.transform.root == primaryHitCollider.transform.root) continue;
 
-                var enemy = h.collider.GetComponentInParent<EnemyController>();
-                if (enemy == null) continue;
+                var enemy = col.GetComponentInParent<EnemyController>();
+                if (enemy == null || !nearMissEnemies.Add(enemy)) continue; // pro Gegner nur EINE Meldung (er hat mehrere Hitboxen)
 
                 var suppression = enemy.GetComponent<EnemySuppressionController>();
-                suppression?.NotifyNearMiss();
+                if (suppression != null) suppression.NotifyNearMiss();
             }
         }
 
@@ -462,8 +474,13 @@ namespace WAD.Weapons
 
         public void TryReload()
         {
+            if (isReloading || weaponData == null) return;
+
             Magazine bestReserve = FindBestReserveMagazine();
             if (bestReserve == null) return;
+
+            // Kein Tausch gegen ein Magazin, das nicht voller ist als das eingelegte
+            if (loadedMagazine != null && bestReserve.currentRounds <= loadedMagazine.currentRounds) return;
 
             StartCoroutine(ReloadRoutine(bestReserve));
         }

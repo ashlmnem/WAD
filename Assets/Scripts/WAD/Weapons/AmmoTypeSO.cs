@@ -27,6 +27,8 @@ namespace WAD.Weapons
         [Header("Visuals")]
         public GameObject tracerPrefab;
         public GameObject impactVFXPrefab;
+        [Tooltip("Nach wie vielen Sekunden der Einschlags-Effekt zerstoert wird (Sicherheitsnetz, falls das VFX-Prefab sich nicht selbst aufraeumt)")]
+        public float impactVFXLifetime = 4f;
         [Tooltip("Physische Huelse, die nach jedem Schuss ausgeworfen wird (Punkt: Huelsenauswurf-System) - je Kaliber ein eigenes Modell/Groesse")]
         public GameObject casingPrefab;
         public Sprite icon;

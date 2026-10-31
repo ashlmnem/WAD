@@ -14,6 +14,9 @@ namespace WAD.Inventory
         public UnityEngine.Object itemAsset;
         public int quantity = 1;
 
+        /// <summary> Wird kurz vor dem Zerstoeren ausgeloest, wenn der Spieler das Item aufgesammelt hat (z.B. damit Spawner sich das merken koennen). </summary>
+        public event System.Action<WorldItemPickup> PickedUp;
+
         public IInventoryItem Item => itemAsset as IInventoryItem;
 
         public string InteractionPrompt => $"F - {Item?.DisplayName} aufheben";
@@ -31,9 +34,12 @@ namespace WAD.Inventory
                 return false;
             }
 
+            if (inventory == null) return false;
+
             bool added = inventory.AddItem(Item, quantity);
             if (added)
             {
+                PickedUp?.Invoke(this);
                 Destroy(gameObject);
             }
             return added;

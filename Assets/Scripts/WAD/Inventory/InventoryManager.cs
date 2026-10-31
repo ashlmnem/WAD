@@ -34,23 +34,48 @@ namespace WAD.Inventory
 
         public event System.Action OnInventoryChanged;
 
-        private void Update()
+        private void Awake()
+        {
+            OnInventoryChanged += PushWeightToMovementController;
+        }
+
+        private void Start()
         {
             PushWeightToMovementController();
+        }
+
+        private void OnDestroy()
+        {
+            OnInventoryChanged -= PushWeightToMovementController;
+        }
+
+        private float lastWeaponsWeight = -1f;
+
+        private void Update()
+        {
+            // Inventar-Aenderungen melden sich per Event. Das Waffengewicht aendert sich
+            // aber auch ohne Event (Munition verschossen, Magazin getauscht, Waffe aufgehoben) -
+            // darum hier nur ein billiger Vergleich statt jedes Frame alle Stacks neu zu summieren.
+            float weaponsWeight = weaponHolder != null ? weaponHolder.GetTotalEquippedWeaponsWeightKg() : 0f;
+            if (!Mathf.Approximately(weaponsWeight, lastWeaponsWeight)) PushWeightToMovementController();
         }
 
         public bool AddItem(IInventoryItem item, int amount = 1)
         {
             if (item == null || amount <= 0) return false;
 
+            // maxStackSize <= 0 (z.B. im Inspector vergessen) fuehrte unten zu einer
+            // Endlosschleife (stackAmount blieb 0) und damit zum Einfrieren des Spiels.
+            int maxStack = Mathf.Max(1, item.MaxStackSize);
+
             if (item.Stackable)
             {
                 InventoryStack existing = stacks.Find(s => s.Item != null && s.Item.ItemId == item.ItemId
-                    && s.quantity < item.MaxStackSize);
+                    && s.quantity < maxStack);
 
                 if (existing != null)
                 {
-                    int spaceLeft = item.MaxStackSize - existing.quantity;
+                    int spaceLeft = maxStack - existing.quantity;
                     int toAdd = Mathf.Min(spaceLeft, amount);
                     existing.quantity += toAdd;
                     amount -= toAdd;
@@ -65,7 +90,7 @@ namespace WAD.Inventory
 
             while (amount > 0)
             {
-                int stackAmount = item.Stackable ? Mathf.Min(amount, item.MaxStackSize) : 1;
+                int stackAmount = item.Stackable ? Mathf.Min(amount, maxStack) : 1;
                 stacks.Add(new InventoryStack { itemAsset = item as Object, quantity = stackAmount });
                 amount -= stackAmount;
             }
@@ -168,6 +193,7 @@ namespace WAD.Inventory
             if (movementController == null) return;
 
             float weaponsWeight = weaponHolder != null ? weaponHolder.GetTotalEquippedWeaponsWeightKg() : 0f;
+            lastWeaponsWeight = weaponsWeight;
             movementController.currentWeight = GetTotalWeightKg() + weaponsWeight;
         }
 

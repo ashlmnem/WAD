@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using WAD.Procedural;
@@ -7,11 +8,17 @@ namespace WAD.Enemies
     /// <summary>
     /// Abonniert ProceduralGridGenerator.OnChunkSpawned und verteilt Gegner an
     /// EnemySpawnPoint-Markierungen - MIT bewusster Begrenzung, damit die Welt
-    /// nicht ueberfuellt wirkt (Punkt 2 aus der Anfrage):
+    /// nicht ueberfuellt wirkt:
     ///
     /// 1) spawnChance: nicht jeder Punkt bekommt einen Gegner
     /// 2) maxActiveEnemies: globale Obergrenze ueber die GESAMTE Welt gleichzeitig
-    /// 3) minDistanceFromPlayer: kein Spawn direkt neben dem Spieler (unfair/immersion-brechend)
+    /// 3) minDistanceFromPlayer: kein Spawn direkt neben dem Spieler
+    ///
+    /// Aufraeumen: Gegner (und Leichen) gehoeren zu ihrem Chunk und werden mit
+    /// ihm entfernt. Vorher blieben sie nach dem Despawn des Chunks im Nichts
+    /// stehen (NavMesh weg -> Agent-Fehler), zaehlten aber weiter gegen die
+    /// Obergrenze. Getoetete Gegner kommen beim erneuten Betreten des Chunks
+    /// nicht mehr zurueck.
     /// </summary>
     [RequireComponent(typeof(ProceduralGridGenerator))]
     public class EnemySpawner : MonoBehaviour
@@ -33,11 +40,20 @@ namespace WAD.Enemies
         [Header("Seed")]
         public int enemySeed = 99999;
 
-        [Header("Bake-Verzoegerung")]
-        [Tooltip("Muss groesser sein als die Verzoegerung in ChunkNavMeshBaker, damit das NavMesh vor dem Spawnen fertig ist")]
+        [Header("Verzoegerung")]
+        [Tooltip("Kurze Wartezeit nach dem Chunk-Spawn (das NavMesh wird inzwischen synchron vom ProceduralGridGenerator gebacken). 0 = im selben Frame.")]
         public float spawnDelayAfterChunk = 0.1f;
 
         private readonly List<EnemyController> activeEnemies = new List<EnemyController>();
+
+        // Chunk-Objekt -> aktuelle Koordinate (nur solange der Chunk aktiv ist)
+        private readonly Dictionary<GameObject, Vector2Int> chunkCoords = new Dictionary<GameObject, Vector2Int>();
+
+        // Chunk-Koordinate -> erzeugte Gegner-Objekte (lebend und tot)
+        private readonly Dictionary<Vector2Int, List<GameObject>> enemiesByCoord = new Dictionary<Vector2Int, List<GameObject>>();
+
+        // Chunk-Koordinate -> Indizes der Spawn-Punkte, deren Gegner schon getoetet wurde
+        private readonly Dictionary<Vector2Int, HashSet<int>> killedPoints = new Dictionary<Vector2Int, HashSet<int>>();
 
         private void Reset()
         {
@@ -46,65 +62,120 @@ namespace WAD.Enemies
 
         private void OnEnable()
         {
-            if (gridGenerator != null) gridGenerator.OnChunkSpawned += HandleChunkSpawned;
+            if (gridGenerator == null) return;
+
+            gridGenerator.OnChunkSpawned += HandleChunkSpawned;
+            gridGenerator.OnChunkDespawned += HandleChunkDespawned;
         }
 
         private void OnDisable()
         {
-            if (gridGenerator != null) gridGenerator.OnChunkSpawned -= HandleChunkSpawned;
+            if (gridGenerator == null) return;
+
+            gridGenerator.OnChunkSpawned -= HandleChunkSpawned;
+            gridGenerator.OnChunkDespawned -= HandleChunkDespawned;
         }
 
         private void HandleChunkSpawned(GameObject chunk, Vector2Int coord)
         {
+            chunkCoords[chunk] = coord;
+
             if (enemyPrefabs == null || enemyPrefabs.Length == 0) return;
 
-            // Verzoegerung, damit ChunkNavMeshBaker sein NavMesh zuerst fertigstellt
             StartCoroutine(DelayedSpawnCheck(chunk, coord));
         }
 
-        private System.Collections.IEnumerator DelayedSpawnCheck(GameObject chunk, Vector2Int coord)
+        private void HandleChunkDespawned(GameObject chunk, Vector2Int coord)
         {
-            yield return new WaitForSeconds(spawnDelayAfterChunk);
+            chunkCoords.Remove(chunk);
 
-            if (chunk == null) yield break; // Chunk wurde inzwischen wieder despawnt
+            if (!enemiesByCoord.TryGetValue(coord, out var list)) return;
+
+            foreach (var obj in list)
+            {
+                if (obj == null) continue;
+
+                var enemy = obj.GetComponent<EnemyController>();
+                if (enemy != null) activeEnemies.Remove(enemy);
+
+                Destroy(obj);
+            }
+
+            enemiesByCoord.Remove(coord);
+        }
+
+        private IEnumerator DelayedSpawnCheck(GameObject chunk, Vector2Int coord)
+        {
+            if (spawnDelayAfterChunk > 0f) yield return new WaitForSeconds(spawnDelayAfterChunk);
+            else yield return null;
+
+            // Chunk wurde inzwischen despawnt oder fuer eine andere Koordinate recycelt?
+            if (chunk == null || !chunk.activeInHierarchy) yield break;
+            if (!chunkCoords.TryGetValue(chunk, out Vector2Int currentCoord) || currentCoord != coord) yield break;
+
+            // Doppelt spawnen verhindern (z.B. Chunk despawnt und innerhalb der Wartezeit erneut gespawnt)
+            if (enemiesByCoord.ContainsKey(coord)) yield break;
 
             var spawnPoints = chunk.GetComponentsInChildren<EnemySpawnPoint>(true);
             if (spawnPoints.Length == 0) yield break;
 
-            int hash = unchecked(enemySeed * 486187739 + coord.x * 73856093 ^ coord.y * 19349663);
-            System.Random rng = new System.Random(hash);
+            System.Random rng = new System.Random(gridGenerator.GetChunkSeed(enemySeed, coord));
+            killedPoints.TryGetValue(coord, out HashSet<int> killed);
 
-            foreach (var point in spawnPoints)
+            for (int i = 0; i < spawnPoints.Length; i++)
             {
+                // Zufallswuerfe IMMER ziehen, damit uebrige Punkte stabil bleiben,
+                // auch wenn ein Punkt wegen Obergrenze/Abstand/Kill ausgelassen wird.
+                bool rolledSpawn = rng.NextDouble() <= spawnChance;
+                int prefabIndex = rng.Next(0, enemyPrefabs.Length);
+
+                if (!rolledSpawn) continue;
+                if (killed != null && killed.Contains(i)) continue;
+
                 CleanupDeadReferences();
+                if (activeEnemies.Count >= maxActiveEnemies) break; // globale Obergrenze erreicht
 
-                if (activeEnemies.Count >= maxActiveEnemies) break; // globale Obergrenze erreicht - fertig
-
-                if (rng.NextDouble() > spawnChance) continue; // Wuerfel nicht getroffen
-
+                var point = spawnPoints[i];
                 if (player != null && Vector3.Distance(point.transform.position, player.position) < minDistanceFromPlayer)
                     continue; // zu nah am Spieler
 
-                SpawnEnemyAt(point.transform, rng);
+                SpawnEnemyAt(point.transform, enemyPrefabs[prefabIndex], coord, i);
             }
         }
 
-        private void SpawnEnemyAt(Transform point, System.Random rng)
+        private void SpawnEnemyAt(Transform point, GameObject prefab, Vector2Int coord, int pointIndex)
         {
-            GameObject prefab = enemyPrefabs[rng.Next(0, enemyPrefabs.Length)];
+            if (prefab == null) return;
+
             GameObject instance = Instantiate(prefab, point.position, point.rotation);
 
-            var enemy = instance.GetComponent<EnemyController>();
-            if (enemy != null)
+            if (!enemiesByCoord.TryGetValue(coord, out var list))
             {
-                activeEnemies.Add(enemy);
-                enemy.OnDeath += HandleEnemyDeath;
+                list = new List<GameObject>();
+                enemiesByCoord[coord] = list;
             }
+            list.Add(instance);
+
+            var enemy = instance.GetComponent<EnemyController>();
+            if (enemy == null) return;
+
+            activeEnemies.Add(enemy);
+            enemy.OnDeath += e =>
+            {
+                activeEnemies.Remove(e);
+                MarkKilled(coord, pointIndex);
+            };
         }
 
-        private void HandleEnemyDeath(EnemyController enemy)
+        private void MarkKilled(Vector2Int coord, int pointIndex)
         {
-            activeEnemies.Remove(enemy);
+            if (!killedPoints.TryGetValue(coord, out var set))
+            {
+                set = new HashSet<int>();
+                killedPoints[coord] = set;
+            }
+
+            set.Add(pointIndex);
         }
 
         private void CleanupDeadReferences()

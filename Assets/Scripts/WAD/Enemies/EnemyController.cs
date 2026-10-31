@@ -133,11 +133,21 @@ namespace WAD.Enemies
             }
         }
 
+        // Wahrnehmung muss nicht jeden Frame laufen: ein Check alle ~0.15 s reicht (und ist pro Gegner
+        // zufaellig versetzt, damit nicht alle Gegner im selben Frame rechnen).
+        private const float DetectionInterval = 0.15f;
+        private float nextDetectionTime;
+        private static readonly Collider[] detectionBuffer = new Collider[128];
+
         private void Update()
         {
             if (state == EnemyState.Dead) return;
 
-            UpdatePlayerDetection();
+            if (Time.time >= nextDetectionTime)
+            {
+                nextDetectionTime = Time.time + DetectionInterval * Random.Range(0.8f, 1.2f);
+                UpdatePlayerDetection();
+            }
 
             switch (state)
             {
@@ -150,11 +160,14 @@ namespace WAD.Enemies
         // ---- Wahrnehmung ----
         private void UpdatePlayerDetection()
         {
-            Collider[] hits = Physics.OverlapSphere(transform.position, sightRange, playerLayer);
+            int hitCount = Physics.OverlapSphereNonAlloc(transform.position, sightRange, detectionBuffer, playerLayer,
+                QueryTriggerInteraction.Ignore);
 
             Transform candidate = null;
-            foreach (var h in hits)
+            for (int i = 0; i < hitCount; i++)
             {
+                var h = detectionBuffer[i];
+                if (h == null) continue;
                 if (h.transform.root == transform.root) continue; // niemals sich selbst als "Spieler" erkennen
                 if (h.GetComponentInParent<EnemyController>() != null) continue; // niemals andere Gegner als "Spieler" erkennen
                 candidate = h.transform;
@@ -326,16 +339,20 @@ namespace WAD.Enemies
         /// mit minGroupSize = 1 immer wahr war und die Gruppen-Anforderung
         /// der "Death Insurgency" nie etwas bewirkt hat.
         /// </summary>
+        private static readonly HashSet<EnemyController> groupBuffer = new HashSet<EnemyController>();
+
         private bool HasEnoughGroupNearby()
         {
-            Collider[] nearby = Physics.OverlapSphere(transform.position, groupCheckRadius, sameTypeLayer);
+            int count = Physics.OverlapSphereNonAlloc(transform.position, groupCheckRadius, detectionBuffer, sameTypeLayer,
+                QueryTriggerInteraction.Ignore);
 
-            var others = new HashSet<EnemyController>();
-            foreach (var col in nearby)
+            groupBuffer.Clear();
+            for (int i = 0; i < count; i++)
             {
-                var other = col.GetComponentInParent<EnemyController>();
-                if (other != null && other != this) others.Add(other);
+                var other = detectionBuffer[i] != null ? detectionBuffer[i].GetComponentInParent<EnemyController>() : null;
+                if (other != null && other != this) groupBuffer.Add(other);
             }
+            var others = groupBuffer;
 
             return others.Count >= minGroupSize;
         }
