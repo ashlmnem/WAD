@@ -156,6 +156,18 @@ namespace WAD.Weapons.Attachments
             return aimPoint;
         }
 
+        /// <summary>
+        /// Wurzel des montierten Optik-Modells (dessen Ursprung liegt bei allen Optiken auf der
+        /// Mittellinie der Visierung) oder null, wenn keine Optik montiert ist.
+        /// </summary>
+        public Transform GetOpticVisualRoot()
+        {
+            string opticRailId = FindOpticRailId();
+            if (opticRailId == null) return null;
+
+            return spawnedVisuals.TryGetValue(opticRailId, out var visual) && visual != null ? visual.transform : null;
+        }
+
         /// <summary> Rekursive Suche nach einem Kindpunkt (Transform.Find sucht nur direkte Kinder). </summary>
         private static Transform FindDescendant(Transform root, string name)
         {

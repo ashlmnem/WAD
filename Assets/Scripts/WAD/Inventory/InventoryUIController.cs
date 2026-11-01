@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using WAD.Core;
 
 namespace WAD.Inventory.UI
 {
@@ -32,8 +33,55 @@ namespace WAD.Inventory.UI
         /// </summary>
         public static bool IsOpen { get; private set; }
 
+        private bool isDuplicate;
+
+        /// <summary>
+        /// Dasselbe Skript liegt im Canvas-Prefab UND (als Altlast) auf dem Spieler-Prefab. Beide
+        /// bedienten dieselben Panels; die Spieler-Kopie hatte in der ShootingRange zudem einen
+        /// ungueltigen 'Slot Prefab'-Verweis (Warnung "Slot Prefab ist nicht zugewiesen") und blieb
+        /// ohne Slots. Es gibt jetzt genau EINE aktive Instanz: bevorzugt die, die in einem Canvas liegt.
+        /// </summary>
+        private void Awake()
+        {
+            var all = FindObjectsByType<InventoryUIController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (all.Length < 2) return;
+
+            InventoryUIController winner = null;
+            foreach (var candidate in all)
+            {
+                if (winner == null || IsPreferredOver(candidate, winner)) winner = candidate;
+            }
+
+            // Alle anderen Instanzen ausmustern - auch solche, die schon laenger laufen
+            // (z.B. wenn das Canvas erst nach dem Spieler erzeugt wird).
+            foreach (var candidate in all)
+            {
+                if (candidate != winner) candidate.RetireAsDuplicate();
+            }
+        }
+
+        private void RetireAsDuplicate()
+        {
+            if (isDuplicate) return;
+
+            isDuplicate = true;
+            enabled = false; // verhindert Start/Update
+            Destroy(this);
+        }
+
+        private static bool IsPreferredOver(InventoryUIController a, InventoryUIController b)
+        {
+            bool aInCanvas = a.GetComponentInParent<Canvas>(true) != null;
+            bool bInCanvas = b.GetComponentInParent<Canvas>(true) != null;
+            if (aInCanvas != bInCanvas) return aInCanvas;
+
+            return a.GetInstanceID() < b.GetInstanceID();
+        }
+
         private void Start()
         {
+            if (isDuplicate) return;
+
             ResolveMissingReferences();
 
             if (inventory != null)
@@ -98,7 +146,10 @@ namespace WAD.Inventory.UI
         private void SetOpen(bool open)
         {
             isOpen = open;
-            if (panelRoot != null) panelRoot.SetActive(open);
+
+            // Sitzt dieses Skript selbst auf dem Panel, darf das Panel nicht per SetActive(false)
+            // deaktiviert werden - sonst laeuft Update() nie wieder und Tab oeffnet nichts mehr.
+            UiPanelVisibility.Set(panelRoot, open, this);
 
             Cursor.lockState = open ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = open;

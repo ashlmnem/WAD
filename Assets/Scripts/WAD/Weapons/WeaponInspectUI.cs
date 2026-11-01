@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using WAD.Core;
 using WAD.Weapons;
 
 namespace WAD.Weapons.UI
@@ -54,8 +55,52 @@ namespace WAD.Weapons.UI
         private readonly List<GameObject> spawnedCatalogRows = new List<GameObject>();
         private WeaponController lastBuiltFor;
 
+        private bool isDuplicate;
+        private bool? lastVisible;
+
+        /// <summary>
+        /// Wie beim Inventar: das Skript existiert im Canvas-Prefab UND auf dem Spieler-Prefab.
+        /// Zwei Instanzen steuerten dasselbe Panel; die im Canvas liegende gewinnt.
+        /// </summary>
+        private void Awake()
+        {
+            var all = FindObjectsByType<WeaponInspectUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            if (all.Length < 2) return;
+
+            WeaponInspectUI winner = null;
+            foreach (var candidate in all)
+            {
+                if (winner == null || IsPreferredOver(candidate, winner)) winner = candidate;
+            }
+
+            foreach (var candidate in all)
+            {
+                if (candidate != winner) candidate.RetireAsDuplicate();
+            }
+        }
+
+        private void RetireAsDuplicate()
+        {
+            if (isDuplicate) return;
+
+            isDuplicate = true;
+            enabled = false;
+            Destroy(this);
+        }
+
+        private static bool IsPreferredOver(WeaponInspectUI a, WeaponInspectUI b)
+        {
+            bool aInCanvas = a.GetComponentInParent<Canvas>(true) != null;
+            bool bInCanvas = b.GetComponentInParent<Canvas>(true) != null;
+            if (aInCanvas != bInCanvas) return aInCanvas;
+
+            return a.GetInstanceID() < b.GetInstanceID();
+        }
+
         private void Start()
         {
+            if (isDuplicate) return;
+
             ResolveMissingReferences();
             SetPanelVisible(false);
         }
@@ -81,18 +126,17 @@ namespace WAD.Weapons.UI
             if (magazineFillText == null) magazineFillText = FindTextByName("Text_MagFill");
             if (reserveMagazinesText == null) reserveMagazinesText = FindTextByName("Text_ReserveMags");
 
-            // Panel automatisch bestimmen - aber NIE das eigene GameObject,
-            // sonst deaktiviert SetPanelVisible(false) dieses Skript selbst.
-            if (panelRoot == null && weaponNameText != null)
+            // Panel automatisch bestimmen: gemeinsamer Elternknoten aller gefundenen Text-Elemente.
+            // (Frueher lief die Suche bis zur Hierarchie-Wurzel hoch, wenn kein Objekt "InspectPanel..."
+            // hiess - und deaktivierte dann das GESAMTE Canvas: HUD, Fadenkreuz, Magazin-Anzeige, Inventar.)
+            if (panelRoot == null)
             {
-                Transform root = weaponNameText.transform;
-                while (root.parent != null &&
-                       !root.name.StartsWith("InspectPanel", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    root = root.parent;
-                }
+                Transform common = FindCommonParent(weaponNameText, ammoTypeText, magazineFillText, reserveMagazinesText);
 
-                if (root.gameObject != gameObject) panelRoot = root.gameObject;
+                if (common != null && !UiPanelVisibility.IsRootCanvas(common.gameObject))
+                {
+                    panelRoot = common.gameObject;
+                }
             }
 
             if (weaponNameText == null)
@@ -119,7 +163,36 @@ namespace WAD.Weapons.UI
 
         private void SetPanelVisible(bool visible)
         {
-            if (panelRoot != null && panelRoot.activeSelf != visible) panelRoot.SetActive(visible);
+            if (lastVisible.HasValue && lastVisible.Value == visible) return;
+            lastVisible = visible;
+
+            // Liegt dieses Skript im Panel selbst, wird per CanvasGroup ausgeblendet statt per SetActive.
+            UiPanelVisibility.Set(panelRoot, visible, this);
+        }
+
+        /// <summary> Naechster gemeinsamer Elternknoten aller uebergebenen (nicht-null) Elemente. </summary>
+        private static Transform FindCommonParent(params Text[] texts)
+        {
+            Transform common = null;
+
+            foreach (var text in texts)
+            {
+                if (text == null) continue;
+
+                if (common == null)
+                {
+                    common = text.transform;
+                    continue;
+                }
+
+                while (common != null && !text.transform.IsChildOf(common)) common = common.parent;
+                if (common == null) return null;
+            }
+
+            // Nur ein einziges Text-Element gefunden: dessen Elternknoten (nicht das Element selbst) ist das Panel.
+            if (common != null && common.GetComponent<Text>() != null) common = common.parent;
+
+            return common;
         }
 
         private void RefreshDisplay()

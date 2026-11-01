@@ -1,0 +1,548 @@
+From c11bcfa53218b1221d1808f66ee503f92350cca1 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 1 Nov 2026 16:35:49 +0000
+Subject: [PATCH] Fix HUD/inventory disappearing, ADS stuck after firing, XM607
+ sight off-centre
+
+- UI: WeaponInspectUI's panel auto-detection walked up to the root and disabled the whole Canvas;
+  scripts that sit on their own panel switched themselves off via SetActive. New UiPanelVisibility
+  (CanvasGroup when the owner lives in the panel, never hides a root Canvas).
+- UI: Canvas prefab and Player prefab both carried InventoryUIController/WeaponInspectUI; keep the
+  Canvas one, retire the rest (fixes the 'Slot Prefab ist nicht zugewiesen' warning in ShootingRange).
+- Animator (G3, M27, AKM): Fire_ADS state had no exit when IsAiming became false -> stuck in the ADS pose.
+  Added FireADS -> AimingOFF (IsAiming == false).
+- XM607: optic mount and iron-sight aim point moved onto the measured centre line (x=0); new opt-in
+  WeaponController.autoCenterOpticLaterally centres the optic itself, enabled on the XM607.
+---
+ Assets/Animations/AC_AKM.controller           | 26 ++++++
+ Assets/Animations/AC_G3.controller            | 26 ++++++
+ Assets/Animations/AC_M27.controller           | 26 ++++++
+ Assets/Prefabs/Weapons/WAD_XM607.prefab       |  5 +-
+ Assets/Scripts/WAD/Core/UiPanelVisibility.cs  | 59 ++++++++++++
+ .../WAD/Core/UiPanelVisibility.cs.meta        | 11 +++
+ .../WAD/Inventory/InventoryUIController.cs    | 53 ++++++++++-
+ .../WAD/Weapons/WeaponAttachmentManager.cs    | 12 +++
+ .../Scripts/WAD/Weapons/WeaponController.cs   | 22 ++++-
+ Assets/Scripts/WAD/Weapons/WeaponInspectUI.cs | 93 +++++++++++++++++--
+ 10 files changed, 319 insertions(+), 14 deletions(-)
+ create mode 100644 Assets/Scripts/WAD/Core/UiPanelVisibility.cs
+ create mode 100644 Assets/Scripts/WAD/Core/UiPanelVisibility.cs.meta
+
+diff --git a/Assets/Animations/AC_AKM.controller b/Assets/Animations/AC_AKM.controller
+index 4fbc7f9..4706b6c 100644
+--- a/Assets/Animations/AC_AKM.controller
++++ b/Assets/Animations/AC_AKM.controller
+@@ -12,6 +12,7 @@ AnimatorState:
+   m_CycleOffset: 0
+   m_Transitions:
+   - {fileID: -3982524529371393385}
++  - {fileID: 7700000000000000003}
+   m_StateMachineBehaviours: []
+   m_Position: {x: 50, y: 50, z: 0}
+   m_IKOnFeet: 0
+@@ -714,3 +715,28 @@ AnimatorStateTransition:
+   m_InterruptionSource: 0
+   m_OrderedInterruption: 1
+   m_CanTransitionToSelf: 1
++--- !u!1101 &7700000000000000003
++AnimatorStateTransition:
++  m_ObjectHideFlags: 1
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_Name: 
++  m_Conditions:
++  - m_ConditionMode: 2
++    m_ConditionEvent: IsAiming
++    m_EventTreshold: 0
++  m_DstStateMachine: {fileID: 0}
++  m_DstState: {fileID: -1101127298856249805}
++  m_Solo: 0
++  m_Mute: 0
++  m_IsExit: 0
++  serializedVersion: 3
++  m_TransitionDuration: 0.1
++  m_TransitionOffset: 0
++  m_ExitTime: 0.75
++  m_HasExitTime: 0
++  m_HasFixedDuration: 1
++  m_InterruptionSource: 0
++  m_OrderedInterruption: 1
++  m_CanTransitionToSelf: 1
+diff --git a/Assets/Animations/AC_G3.controller b/Assets/Animations/AC_G3.controller
+index b575d4e..6acd0c5 100644
+--- a/Assets/Animations/AC_G3.controller
++++ b/Assets/Animations/AC_G3.controller
+@@ -64,6 +64,7 @@ AnimatorState:
+   m_CycleOffset: 0
+   m_Transitions:
+   - {fileID: -5863752822269073665}
++  - {fileID: 7700000000000000001}
+   m_StateMachineBehaviours: []
+   m_Position: {x: 50, y: 50, z: 0}
+   m_IKOnFeet: 0
+@@ -589,3 +590,28 @@ AnimatorStateTransition:
+   m_InterruptionSource: 0
+   m_OrderedInterruption: 1
+   m_CanTransitionToSelf: 1
++--- !u!1101 &7700000000000000001
++AnimatorStateTransition:
++  m_ObjectHideFlags: 1
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_Name: 
++  m_Conditions:
++  - m_ConditionMode: 2
++    m_ConditionEvent: IsAiming
++    m_EventTreshold: 0
++  m_DstStateMachine: {fileID: 0}
++  m_DstState: {fileID: -5570515816957106869}
++  m_Solo: 0
++  m_Mute: 0
++  m_IsExit: 0
++  serializedVersion: 3
++  m_TransitionDuration: 0.1
++  m_TransitionOffset: 0
++  m_ExitTime: 0.75
++  m_HasExitTime: 0
++  m_HasFixedDuration: 1
++  m_InterruptionSource: 0
++  m_OrderedInterruption: 1
++  m_CanTransitionToSelf: 1
+diff --git a/Assets/Animations/AC_M27.controller b/Assets/Animations/AC_M27.controller
+index 5c2815b..d8d57d2 100644
+--- a/Assets/Animations/AC_M27.controller
++++ b/Assets/Animations/AC_M27.controller
+@@ -189,6 +189,7 @@ AnimatorState:
+   m_CycleOffset: 0
+   m_Transitions:
+   - {fileID: -7925303207622155229}
++  - {fileID: 7700000000000000002}
+   m_StateMachineBehaviours: []
+   m_Position: {x: 50, y: 50, z: 0}
+   m_IKOnFeet: 0
+@@ -592,3 +593,28 @@ AnimatorStateTransition:
+   m_InterruptionSource: 0
+   m_OrderedInterruption: 1
+   m_CanTransitionToSelf: 1
++--- !u!1101 &7700000000000000002
++AnimatorStateTransition:
++  m_ObjectHideFlags: 1
++  m_CorrespondingSourceObject: {fileID: 0}
++  m_PrefabInstance: {fileID: 0}
++  m_PrefabAsset: {fileID: 0}
++  m_Name: 
++  m_Conditions:
++  - m_ConditionMode: 2
++    m_ConditionEvent: IsAiming
++    m_EventTreshold: 0
++  m_DstStateMachine: {fileID: 0}
++  m_DstState: {fileID: 6179390621138366803}
++  m_Solo: 0
++  m_Mute: 0
++  m_IsExit: 0
++  serializedVersion: 3
++  m_TransitionDuration: 0.1
++  m_TransitionOffset: 0
++  m_ExitTime: 0.75
++  m_HasExitTime: 0
++  m_HasFixedDuration: 1
++  m_InterruptionSource: 0
++  m_OrderedInterruption: 1
++  m_CanTransitionToSelf: 1
+diff --git a/Assets/Prefabs/Weapons/WAD_XM607.prefab b/Assets/Prefabs/Weapons/WAD_XM607.prefab
+index 731da2b..73ad3ac 100644
+--- a/Assets/Prefabs/Weapons/WAD_XM607.prefab
++++ b/Assets/Prefabs/Weapons/WAD_XM607.prefab
+@@ -211,7 +211,7 @@ Transform:
+   m_GameObject: {fileID: 8516409724758677282}
+   serializedVersion: 2
+   m_LocalRotation: {x: -0.00000008940697, y: -0, z: -0, w: 1}
+-  m_LocalPosition: {x: 0.003, y: -2.145, z: 0.884}
++  m_LocalPosition: {x: 0, y: -2.145, z: 0.884}
+   m_LocalScale: {x: 2.5, y: 2.4999995, z: 2.4999995}
+   m_ConstrainProportionsScale: 0
+   m_Children: []
+@@ -242,7 +242,7 @@ Transform:
+   m_GameObject: {fileID: 8715184401141625318}
+   serializedVersion: 2
+   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+-  m_LocalPosition: {x: 0.004899996, y: -0.44050053, z: 0.8460008}
++  m_LocalPosition: {x: 0, y: -0.44050053, z: 0.8460008}
+   m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
+   m_ConstrainProportionsScale: 0
+   m_Children: []
+@@ -443,6 +443,7 @@ MonoBehaviour:
+   modelRoot: {fileID: 5348290688732449234}
+   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
+   defaultIronSightAimPoint: {fileID: 8596952377058541985}
++  autoCenterOpticLaterally: 1
+   adsPositionLerpSpeed: 10
+ --- !u!114 &6678873023715160492
+ MonoBehaviour:
+diff --git a/Assets/Scripts/WAD/Core/UiPanelVisibility.cs b/Assets/Scripts/WAD/Core/UiPanelVisibility.cs
+new file mode 100644
+index 0000000..0ab74aa
+--- /dev/null
++++ b/Assets/Scripts/WAD/Core/UiPanelVisibility.cs
+@@ -0,0 +1,59 @@
++using UnityEngine;
++
++namespace WAD.Core
++{
++    /// <summary>
++    /// Zeigt/versteckt UI-Panels, OHNE sich dabei selbst lahmzulegen.
++    ///
++    /// Problem vorher: Mehrere UI-Skripte sitzen auf genau dem Panel, das sie ein-/ausblenden
++    /// (z.B. InventoryUIController auf "InventoryPanel", WeaponInspectUI auf "WeaponInspectUI").
++    /// GameObject.SetActive(false) schaltet dann auch das Skript ab - es kann sein Panel nie
++    /// wieder einschalten. Schlimmer: Die automatische Panel-Suche von WeaponInspectUI lief bis
++    /// zur Wurzel hoch und hat das GANZE Canvas deaktiviert (HUD, Fadenkreuz, Magazin-Anzeige, Inventar).
++    ///
++    /// Regeln hier:
++    /// - Ein Root-Canvas wird nie ausgeblendet.
++    /// - Liegt der Besitzer (owner) im Panel, bleibt das Panel aktiv und wird per CanvasGroup
++    ///   unsichtbar gemacht (Alpha 0, keine Raycasts).
++    /// - Sonst wird ganz normal SetActive verwendet.
++    /// </summary>
++    public static class UiPanelVisibility
++    {
++        public static bool IsRootCanvas(GameObject go)
++        {
++            if (go == null) return false;
++            var canvas = go.GetComponent<Canvas>();
++            return canvas != null && canvas.isRootCanvas;
++        }
++
++        public static void Set(GameObject panel, bool visible, Component owner)
++        {
++            if (panel == null) return;
++
++            if (IsRootCanvas(panel))
++            {
++                Debug.LogWarning($"[UiPanelVisibility] '{panel.name}' ist ein Root-Canvas und wird nie aus-/eingeblendet " +
++                                 "(sonst verschwindet das komplette HUD). Bitte ein eigenes Panel zuweisen.", owner);
++                return;
++            }
++
++            bool hostsOwner = owner != null && owner.transform.IsChildOf(panel.transform);
++
++            if (hostsOwner)
++            {
++                if (!panel.activeSelf) panel.SetActive(true);
++
++                var group = panel.GetComponent<CanvasGroup>();
++                if (group == null) group = panel.AddComponent<CanvasGroup>();
++
++                float alpha = visible ? 1f : 0f;
++                if (!Mathf.Approximately(group.alpha, alpha)) group.alpha = alpha;
++                if (group.interactable != visible) group.interactable = visible;
++                if (group.blocksRaycasts != visible) group.blocksRaycasts = visible;
++                return;
++            }
++
++            if (panel.activeSelf != visible) panel.SetActive(visible);
++        }
++    }
++}
+diff --git a/Assets/Scripts/WAD/Core/UiPanelVisibility.cs.meta b/Assets/Scripts/WAD/Core/UiPanelVisibility.cs.meta
+new file mode 100644
+index 0000000..6a43d2b
+--- /dev/null
++++ b/Assets/Scripts/WAD/Core/UiPanelVisibility.cs.meta
+@@ -0,0 +1,11 @@
++fileFormatVersion: 2
++guid: 7c3e91d0b4a84f2d9e6a15c8f0d27b43
++MonoImporter:
++  externalObjects: {}
++  serializedVersion: 2
++  defaultReferences: []
++  executionOrder: 0
++  icon: {instanceID: 0}
++  userData: 
++  assetBundleName: 
++  assetBundleVariant: 
+diff --git a/Assets/Scripts/WAD/Inventory/InventoryUIController.cs b/Assets/Scripts/WAD/Inventory/InventoryUIController.cs
+index d849927..45e8433 100644
+--- a/Assets/Scripts/WAD/Inventory/InventoryUIController.cs
++++ b/Assets/Scripts/WAD/Inventory/InventoryUIController.cs
+@@ -2,6 +2,7 @@ using System;
+ using System.Collections.Generic;
+ using UnityEngine;
+ using UnityEngine.UI;
++using WAD.Core;
+ 
+ namespace WAD.Inventory.UI
+ {
+@@ -32,8 +33,55 @@ namespace WAD.Inventory.UI
+         /// </summary>
+         public static bool IsOpen { get; private set; }
+ 
++        private bool isDuplicate;
++
++        /// <summary>
++        /// Dasselbe Skript liegt im Canvas-Prefab UND (als Altlast) auf dem Spieler-Prefab. Beide
++        /// bedienten dieselben Panels; die Spieler-Kopie hatte in der ShootingRange zudem einen
++        /// ungueltigen 'Slot Prefab'-Verweis (Warnung "Slot Prefab ist nicht zugewiesen") und blieb
++        /// ohne Slots. Es gibt jetzt genau EINE aktive Instanz: bevorzugt die, die in einem Canvas liegt.
++        /// </summary>
++        private void Awake()
++        {
++            var all = FindObjectsByType<InventoryUIController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
++            if (all.Length < 2) return;
++
++            InventoryUIController winner = null;
++            foreach (var candidate in all)
++            {
++                if (winner == null || IsPreferredOver(candidate, winner)) winner = candidate;
++            }
++
++            // Alle anderen Instanzen ausmustern - auch solche, die schon laenger laufen
++            // (z.B. wenn das Canvas erst nach dem Spieler erzeugt wird).
++            foreach (var candidate in all)
++            {
++                if (candidate != winner) candidate.RetireAsDuplicate();
++            }
++        }
++
++        private void RetireAsDuplicate()
++        {
++            if (isDuplicate) return;
++
++            isDuplicate = true;
++            enabled = false; // verhindert Start/Update
++            Destroy(this);
++        }
++
++        private static bool IsPreferredOver(InventoryUIController a, InventoryUIController b)
++        {
++            bool aInCanvas = a.GetComponentInParent<Canvas>(true) != null;
++            bool bInCanvas = b.GetComponentInParent<Canvas>(true) != null;
++            if (aInCanvas != bInCanvas) return aInCanvas;
++
++            return a.GetInstanceID() < b.GetInstanceID();
++        }
++
+         private void Start()
+         {
++            if (isDuplicate) return;
++
+             ResolveMissingReferences();
+ 
+             if (inventory != null)
+@@ -98,7 +146,10 @@ namespace WAD.Inventory.UI
+         private void SetOpen(bool open)
+         {
+             isOpen = open;
+-            if (panelRoot != null) panelRoot.SetActive(open);
++
++            // Sitzt dieses Skript selbst auf dem Panel, darf das Panel nicht per SetActive(false)
++            // deaktiviert werden - sonst laeuft Update() nie wieder und Tab oeffnet nichts mehr.
++            UiPanelVisibility.Set(panelRoot, open, this);
+ 
+             Cursor.lockState = open ? CursorLockMode.None : CursorLockMode.Locked;
+             Cursor.visible = open;
+diff --git a/Assets/Scripts/WAD/Weapons/WeaponAttachmentManager.cs b/Assets/Scripts/WAD/Weapons/WeaponAttachmentManager.cs
+index 58b38cb..e7cf7bc 100644
+--- a/Assets/Scripts/WAD/Weapons/WeaponAttachmentManager.cs
++++ b/Assets/Scripts/WAD/Weapons/WeaponAttachmentManager.cs
+@@ -156,6 +156,18 @@ namespace WAD.Weapons.Attachments
+             return aimPoint;
+         }
+ 
++        /// <summary>
++        /// Wurzel des montierten Optik-Modells (dessen Ursprung liegt bei allen Optiken auf der
++        /// Mittellinie der Visierung) oder null, wenn keine Optik montiert ist.
++        /// </summary>
++        public Transform GetOpticVisualRoot()
++        {
++            string opticRailId = FindOpticRailId();
++            if (opticRailId == null) return null;
++
++            return spawnedVisuals.TryGetValue(opticRailId, out var visual) && visual != null ? visual.transform : null;
++        }
++
+         /// <summary> Rekursive Suche nach einem Kindpunkt (Transform.Find sucht nur direkte Kinder). </summary>
+         private static Transform FindDescendant(Transform root, string name)
+         {
+diff --git a/Assets/Scripts/WAD/Weapons/WeaponController.cs b/Assets/Scripts/WAD/Weapons/WeaponController.cs
+index 3ce4a0c..489f139 100644
+--- a/Assets/Scripts/WAD/Weapons/WeaponController.cs
++++ b/Assets/Scripts/WAD/Weapons/WeaponController.cs
+@@ -60,6 +60,10 @@ namespace WAD.Weapons
+         [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root. WICHTIG: bei JEDER Waffe zuweisen, nicht nur bei Waffen mit Optik!")]
+         public Transform defaultIronSightAimPoint;
+         public float adsPositionLerpSpeed = 10f;
++        [Tooltip("Richtet beim Zielen die Optik seitlich exakt an der Bildmitte aus: der seitliche Anteil des 'ADS_AimPoint' wird verworfen " +
++                 "und durch die Mittellinie des Optik-Modells ersetzt. Behebt, dass die Waffe seitlich versetzt wirkt, wenn der Aim Point " +
++                 "im Optik-Prefab um Millimeter neben der Mitte sitzt. Nur aktivieren, wenn der Optik-Montagepunkt der Waffe auf ihrer Mittellinie liegt.")]
++        public bool autoCenterOpticLaterally = false;
+         [Tooltip("Sichtfeld (FOV) der Kamera, wenn NICHT gezielt wird. Vorher fest auf 60 verdrahtet.")]
+         public float hipFOV = 60f;
+ 
+@@ -260,6 +264,13 @@ namespace WAD.Weapons
+             if (playerCamera == null || transform.parent == null) return;
+ 
+             Transform aimPoint = attachments != null ? attachments.GetOpticAimPoint() : null;
++            Transform opticCenterline = null;
++
++            if (aimPoint != null && autoCenterOpticLaterally)
++            {
++                opticCenterline = attachments.GetOpticVisualRoot();
++            }
++
+             if (aimPoint == null) aimPoint = defaultIronSightAimPoint;
+ 
+             Vector3 targetLocalPosition = Vector3.zero;
+@@ -269,7 +280,16 @@ namespace WAD.Weapons
+                 Vector3 originalLocalPos = transform.localPosition;
+                 transform.localPosition = Vector3.zero;
+ 
+-                Vector3 worldOffsetNeeded = playerCamera.transform.position - aimPoint.position;
++                Vector3 aimWorldPosition = aimPoint.position;
++
++                if (opticCenterline != null)
++                {
++                    // Nur die SEITLICHE Komponente korrigieren (Tiefe = Augenabstand und Hoehe bleiben wie eingestellt).
++                    Vector3 right = transform.right;
++                    aimWorldPosition += right * Vector3.Dot(opticCenterline.position - aimWorldPosition, right);
++                }
++
++                Vector3 worldOffsetNeeded = playerCamera.transform.position - aimWorldPosition;
+                 Vector3 localOffsetNeeded = transform.parent.InverseTransformVector(worldOffsetNeeded);
+ 
+                 transform.localPosition = originalLocalPos;
+diff --git a/Assets/Scripts/WAD/Weapons/WeaponInspectUI.cs b/Assets/Scripts/WAD/Weapons/WeaponInspectUI.cs
+index 5fa1134..b6f9a13 100644
+--- a/Assets/Scripts/WAD/Weapons/WeaponInspectUI.cs
++++ b/Assets/Scripts/WAD/Weapons/WeaponInspectUI.cs
+@@ -1,6 +1,7 @@
+ using System.Collections.Generic;
+ using UnityEngine;
+ using UnityEngine.UI;
++using WAD.Core;
+ using WAD.Weapons;
+ 
+ namespace WAD.Weapons.UI
+@@ -54,8 +55,52 @@ namespace WAD.Weapons.UI
+         private readonly List<GameObject> spawnedCatalogRows = new List<GameObject>();
+         private WeaponController lastBuiltFor;
+ 
++        private bool isDuplicate;
++        private bool? lastVisible;
++
++        /// <summary>
++        /// Wie beim Inventar: das Skript existiert im Canvas-Prefab UND auf dem Spieler-Prefab.
++        /// Zwei Instanzen steuerten dasselbe Panel; die im Canvas liegende gewinnt.
++        /// </summary>
++        private void Awake()
++        {
++            var all = FindObjectsByType<WeaponInspectUI>(FindObjectsInactive.Include, FindObjectsSortMode.None);
++            if (all.Length < 2) return;
++
++            WeaponInspectUI winner = null;
++            foreach (var candidate in all)
++            {
++                if (winner == null || IsPreferredOver(candidate, winner)) winner = candidate;
++            }
++
++            foreach (var candidate in all)
++            {
++                if (candidate != winner) candidate.RetireAsDuplicate();
++            }
++        }
++
++        private void RetireAsDuplicate()
++        {
++            if (isDuplicate) return;
++
++            isDuplicate = true;
++            enabled = false;
++            Destroy(this);
++        }
++
++        private static bool IsPreferredOver(WeaponInspectUI a, WeaponInspectUI b)
++        {
++            bool aInCanvas = a.GetComponentInParent<Canvas>(true) != null;
++            bool bInCanvas = b.GetComponentInParent<Canvas>(true) != null;
++            if (aInCanvas != bInCanvas) return aInCanvas;
++
++            return a.GetInstanceID() < b.GetInstanceID();
++        }
++
+         private void Start()
+         {
++            if (isDuplicate) return;
++
+             ResolveMissingReferences();
+             SetPanelVisible(false);
+         }
+@@ -81,18 +126,17 @@ namespace WAD.Weapons.UI
+             if (magazineFillText == null) magazineFillText = FindTextByName("Text_MagFill");
+             if (reserveMagazinesText == null) reserveMagazinesText = FindTextByName("Text_ReserveMags");
+ 
+-            // Panel automatisch bestimmen - aber NIE das eigene GameObject,
+-            // sonst deaktiviert SetPanelVisible(false) dieses Skript selbst.
+-            if (panelRoot == null && weaponNameText != null)
++            // Panel automatisch bestimmen: gemeinsamer Elternknoten aller gefundenen Text-Elemente.
++            // (Frueher lief die Suche bis zur Hierarchie-Wurzel hoch, wenn kein Objekt "InspectPanel..."
++            // hiess - und deaktivierte dann das GESAMTE Canvas: HUD, Fadenkreuz, Magazin-Anzeige, Inventar.)
++            if (panelRoot == null)
+             {
+-                Transform root = weaponNameText.transform;
+-                while (root.parent != null &&
+-                       !root.name.StartsWith("InspectPanel", System.StringComparison.OrdinalIgnoreCase))
++                Transform common = FindCommonParent(weaponNameText, ammoTypeText, magazineFillText, reserveMagazinesText);
++
++                if (common != null && !UiPanelVisibility.IsRootCanvas(common.gameObject))
+                 {
+-                    root = root.parent;
++                    panelRoot = common.gameObject;
+                 }
+-
+-                if (root.gameObject != gameObject) panelRoot = root.gameObject;
+             }
+ 
+             if (weaponNameText == null)
+@@ -119,7 +163,36 @@ namespace WAD.Weapons.UI
+ 
+         private void SetPanelVisible(bool visible)
+         {
+-            if (panelRoot != null && panelRoot.activeSelf != visible) panelRoot.SetActive(visible);
++            if (lastVisible.HasValue && lastVisible.Value == visible) return;
++            lastVisible = visible;
++
++            // Liegt dieses Skript im Panel selbst, wird per CanvasGroup ausgeblendet statt per SetActive.
++            UiPanelVisibility.Set(panelRoot, visible, this);
++        }
++
++        /// <summary> Naechster gemeinsamer Elternknoten aller uebergebenen (nicht-null) Elemente. </summary>
++        private static Transform FindCommonParent(params Text[] texts)
++        {
++            Transform common = null;
++
++            foreach (var text in texts)
++            {
++                if (text == null) continue;
++
++                if (common == null)
++                {
++                    common = text.transform;
++                    continue;
++                }
++
++                while (common != null && !text.transform.IsChildOf(common)) common = common.parent;
++                if (common == null) return null;
++            }
++
++            // Nur ein einziges Text-Element gefunden: dessen Elternknoten (nicht das Element selbst) ist das Panel.
++            if (common != null && common.GetComponent<Text>() != null) common = common.parent;
++
++            return common;
+         }
+ 
+         private void RefreshDisplay()
+-- 
+2.43.0
+

@@ -60,6 +60,10 @@ namespace WAD.Weapons
         [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root. WICHTIG: bei JEDER Waffe zuweisen, nicht nur bei Waffen mit Optik!")]
         public Transform defaultIronSightAimPoint;
         public float adsPositionLerpSpeed = 10f;
+        [Tooltip("Richtet beim Zielen die Optik seitlich exakt an der Bildmitte aus: der seitliche Anteil des 'ADS_AimPoint' wird verworfen " +
+                 "und durch die Mittellinie des Optik-Modells ersetzt. Behebt, dass die Waffe seitlich versetzt wirkt, wenn der Aim Point " +
+                 "im Optik-Prefab um Millimeter neben der Mitte sitzt. Nur aktivieren, wenn der Optik-Montagepunkt der Waffe auf ihrer Mittellinie liegt.")]
+        public bool autoCenterOpticLaterally = false;
         [Tooltip("Sichtfeld (FOV) der Kamera, wenn NICHT gezielt wird. Vorher fest auf 60 verdrahtet.")]
         public float hipFOV = 60f;
 
@@ -260,6 +264,13 @@ namespace WAD.Weapons
             if (playerCamera == null || transform.parent == null) return;
 
             Transform aimPoint = attachments != null ? attachments.GetOpticAimPoint() : null;
+            Transform opticCenterline = null;
+
+            if (aimPoint != null && autoCenterOpticLaterally)
+            {
+                opticCenterline = attachments.GetOpticVisualRoot();
+            }
+
             if (aimPoint == null) aimPoint = defaultIronSightAimPoint;
 
             Vector3 targetLocalPosition = Vector3.zero;
@@ -269,7 +280,16 @@ namespace WAD.Weapons
                 Vector3 originalLocalPos = transform.localPosition;
                 transform.localPosition = Vector3.zero;
 
-                Vector3 worldOffsetNeeded = playerCamera.transform.position - aimPoint.position;
+                Vector3 aimWorldPosition = aimPoint.position;
+
+                if (opticCenterline != null)
+                {
+                    // Nur die SEITLICHE Komponente korrigieren (Tiefe = Augenabstand und Hoehe bleiben wie eingestellt).
+                    Vector3 right = transform.right;
+                    aimWorldPosition += right * Vector3.Dot(opticCenterline.position - aimWorldPosition, right);
+                }
+
+                Vector3 worldOffsetNeeded = playerCamera.transform.position - aimWorldPosition;
                 Vector3 localOffsetNeeded = transform.parent.InverseTransformVector(worldOffsetNeeded);
 
                 transform.localPosition = originalLocalPos;
