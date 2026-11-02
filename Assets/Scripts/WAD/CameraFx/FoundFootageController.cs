@@ -42,8 +42,11 @@ namespace WAD.CameraFx
         private float blendTimer;
         private bool blending;
 
-        // Erzeugte Override-Komponenten
+        // Alle vom Controller benutzten Override-Komponenten (selbst erzeugte UND im Volume-Profil schon vorhandene)
         private readonly Dictionary<Type, VolumeComponent> createdOverrides = new Dictionary<Type, VolumeComponent>();
+
+        // Davon nur die, die der Controller selbst hinzugefuegt hat - nur diese werden beim Zerstoeren wieder entfernt
+        private readonly HashSet<Type> ownedOverrideTypes = new HashSet<Type>();
 
         // Reflexions-Caches
         private sealed class OverrideBinding
@@ -73,9 +76,11 @@ namespace WAD.CameraFx
 
             foreach (var kvp in createdOverrides)
             {
-                if (kvp.Value != null) Destroy(kvp.Value);
+                // Bereits vorhandene Komponenten des Level-Volumes gehoeren dem Level und bleiben unangetastet
+                if (kvp.Value != null && ownedOverrideTypes.Contains(kvp.Key)) Destroy(kvp.Value);
             }
             createdOverrides.Clear();
+            ownedOverrideTypes.Clear();
         }
 
         private void Update()
@@ -252,18 +257,23 @@ namespace WAD.CameraFx
         private static Type FindOverrideType(string shortName)
         {
             // In UnityEngine.Rendering.Universal liegt z.B. FilmGrain
+            Type fallback = null;
+
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 try
                 {
                     foreach (var t in asm.GetTypes())
                     {
-                        if (t.Name == shortName && typeof(VolumeComponent).IsAssignableFrom(t)) return t;
+                        if (t.Name != shortName || !typeof(VolumeComponent).IsAssignableFrom(t)) continue;
+
+                        if (t.Namespace == "UnityEngine.Rendering.Universal") return t;
+                        fallback ??= t;
                     }
                 }
                 catch { /* Assembly ohne lesbare Typen ueberspringen */ }
             }
-            return null;
+            return fallback;
         }
 
         private VolumeComponent EnsureOverride(string shortName)
@@ -277,8 +287,15 @@ namespace WAD.CameraFx
 
                 if (createdOverrides.TryGetValue(b.Type, out var existing) && existing != null) return existing;
 
-                var comp = volume.profile.Add(b.Type, true);
-                if (comp == null) return null;
+                // VolumeProfile.Add() wirft eine InvalidOperationException, wenn die Komponente schon im
+                // Profil liegt (z.B. wenn das Level-Volume bereits eine Vignette enthaelt). Darum erst suchen.
+                if (!volume.profile.TryGet(b.Type, out VolumeComponent comp) || comp == null)
+                {
+                    comp = volume.profile.Add(b.Type, true);
+                    if (comp == null) return null;
+
+                    ownedOverrideTypes.Add(b.Type);
+                }
 
                 comp.active = true;
                 createdOverrides[b.Type] = comp;
@@ -303,6 +320,13 @@ namespace WAD.CameraFx
             }
         }
 
+
+        private static void ForceOverride(object param)
+        {
+            var prop = param.GetType().GetProperty("overrideState", BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null && prop.CanWrite) prop.SetValue(param, true);
+        }
+
         private static void SetParam(VolumeComponent comp, string name, float value)
         {
             var field = comp.GetType().GetField(name, BindingFlags.Public | BindingFlags.Instance);
@@ -316,6 +340,7 @@ namespace WAD.CameraFx
             if (valueField == null) return;
 
             valueField.SetValue(param, value);
+            ForceOverride(param);
             field.SetValue(comp, param);
         }
 
@@ -332,6 +357,7 @@ namespace WAD.CameraFx
             if (valueField == null) return;
 
             valueField.SetValue(param, value);
+            ForceOverride(param);
             field.SetValue(comp, param);
         }
 
@@ -348,6 +374,7 @@ namespace WAD.CameraFx
             if (valueField == null) return;
 
             if (valueField.FieldType == typeof(bool)) valueField.SetValue(param, value);
+            ForceOverride(param);
         }
 
         private static void SetEnumParam(VolumeComponent comp, string name, string enumValueName)
@@ -361,6 +388,7 @@ namespace WAD.CameraFx
             var valueField = param.GetType().GetField("m_Value", BindingFlags.NonPublic | BindingFlags.Instance);
             if (valueField == null) return;
 
+            ForceOverride(param);
             try { valueField.SetValue(param, Enum.Parse(valueField.FieldType, enumValueName, true)); }
             catch { /* Enum-Wert existiert in dieser URP-Version nicht */ }
         }

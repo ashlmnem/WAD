@@ -1,0 +1,438 @@
+From c6ea0a43ac081c8cea194f55a33de931f0ffb7c3 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Mon, 2 Nov 2026 09:53:30 +0000
+Subject: [PATCH] Fix FoundFootage volume exception, casings vs. player, XM607
+ ADS alignment
+
+- FoundFootageController: reuse a component that already exists in the volume profile (TryGet) instead of
+  VolumeProfile.Add() (InvalidOperationException), force overrideState so values apply, only destroy what it created.
+- Casings ignore the player's colliders while in flight (and permanently with the big collider); once settled they
+  get a tiny PlayerContact collider so the player only interacts with a much smaller object. Ejector wires it up.
+- XM607 ADS: new WeaponController.alignRotationOnADS rotates the weapon to the camera axes (hip pose carried by
+  WeaponSocket is yawed/pitched and rolled ~25deg; weapons without an ADS animation never levelled out).
+- Optic aim points: Romeo Riser z 0.53 -> 0.628 (housing centre measured from mesh), x -> -0.002; T-1 Riser x -1.005 -> -0.002.
+---
+ .../Attachments/WAD_Aimpoint T-1 1.prefab     |  2 +-
+ .../Attachments/WAD_Romeo1Pro_Riser.prefab    |  2 +-
+ Assets/Prefabs/Weapons/WAD_XM607.prefab       |  1 +
+ .../WAD/CameraFx/FoundFootageController.cs    | 40 +++++++--
+ .../WAD/Weapons/ShellCasingBehaviour.cs       | 87 ++++++++++++++++++-
+ .../Scripts/WAD/Weapons/ShellCasingEjector.cs | 23 +++++
+ .../Scripts/WAD/Weapons/WeaponController.cs   | 55 +++++++++++-
+ 7 files changed, 198 insertions(+), 12 deletions(-)
+
+diff --git a/Assets/Prefabs/Attachments/WAD_Aimpoint T-1 1.prefab b/Assets/Prefabs/Attachments/WAD_Aimpoint T-1 1.prefab
+index 7a9ed6b..49f4895 100644
+--- a/Assets/Prefabs/Attachments/WAD_Aimpoint T-1 1.prefab	
++++ b/Assets/Prefabs/Attachments/WAD_Aimpoint T-1 1.prefab	
+@@ -25,7 +25,7 @@ Transform:
+   m_GameObject: {fileID: 5745182092700093303}
+   serializedVersion: 2
+   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+-  m_LocalPosition: {x: -1.005, y: -2.575, z: 0.524}
++  m_LocalPosition: {x: -0.002, y: -2.575, z: 0.524}
+   m_LocalScale: {x: 1, y: 1, z: 1}
+   m_ConstrainProportionsScale: 0
+   m_Children: []
+diff --git a/Assets/Prefabs/Attachments/WAD_Romeo1Pro_Riser.prefab b/Assets/Prefabs/Attachments/WAD_Romeo1Pro_Riser.prefab
+index fc3de72..a712e38 100644
+--- a/Assets/Prefabs/Attachments/WAD_Romeo1Pro_Riser.prefab
++++ b/Assets/Prefabs/Attachments/WAD_Romeo1Pro_Riser.prefab
+@@ -25,7 +25,7 @@ Transform:
+   m_GameObject: {fileID: 8804457796757019443}
+   serializedVersion: 2
+   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+-  m_LocalPosition: {x: -0.028, y: -2.575, z: 0.53}
++  m_LocalPosition: {x: -0.002, y: -2.575, z: 0.628}
+   m_LocalScale: {x: 1, y: 1, z: 1}
+   m_ConstrainProportionsScale: 0
+   m_Children: []
+diff --git a/Assets/Prefabs/Weapons/WAD_XM607.prefab b/Assets/Prefabs/Weapons/WAD_XM607.prefab
+index 73ad3ac..661a2f9 100644
+--- a/Assets/Prefabs/Weapons/WAD_XM607.prefab
++++ b/Assets/Prefabs/Weapons/WAD_XM607.prefab
+@@ -444,6 +444,7 @@ MonoBehaviour:
+   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
+   defaultIronSightAimPoint: {fileID: 8596952377058541985}
+   autoCenterOpticLaterally: 1
++  alignRotationOnADS: 1
+   adsPositionLerpSpeed: 10
+ --- !u!114 &6678873023715160492
+ MonoBehaviour:
+diff --git a/Assets/Scripts/WAD/CameraFx/FoundFootageController.cs b/Assets/Scripts/WAD/CameraFx/FoundFootageController.cs
+index f388184..dc6279f 100644
+--- a/Assets/Scripts/WAD/CameraFx/FoundFootageController.cs
++++ b/Assets/Scripts/WAD/CameraFx/FoundFootageController.cs
+@@ -42,9 +42,12 @@ namespace WAD.CameraFx
+         private float blendTimer;
+         private bool blending;
+ 
+-        // Erzeugte Override-Komponenten
++        // Alle vom Controller benutzten Override-Komponenten (selbst erzeugte UND im Volume-Profil schon vorhandene)
+         private readonly Dictionary<Type, VolumeComponent> createdOverrides = new Dictionary<Type, VolumeComponent>();
+ 
++        // Davon nur die, die der Controller selbst hinzugefuegt hat - nur diese werden beim Zerstoeren wieder entfernt
++        private readonly HashSet<Type> ownedOverrideTypes = new HashSet<Type>();
++
+         // Reflexions-Caches
+         private sealed class OverrideBinding
+         {
+@@ -73,9 +76,11 @@ namespace WAD.CameraFx
+ 
+             foreach (var kvp in createdOverrides)
+             {
+-                if (kvp.Value != null) Destroy(kvp.Value);
++                // Bereits vorhandene Komponenten des Level-Volumes gehoeren dem Level und bleiben unangetastet
++                if (kvp.Value != null && ownedOverrideTypes.Contains(kvp.Key)) Destroy(kvp.Value);
+             }
+             createdOverrides.Clear();
++            ownedOverrideTypes.Clear();
+         }
+ 
+         private void Update()
+@@ -252,18 +257,23 @@ namespace WAD.CameraFx
+         private static Type FindOverrideType(string shortName)
+         {
+             // In UnityEngine.Rendering.Universal liegt z.B. FilmGrain
++            Type fallback = null;
++
+             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+             {
+                 try
+                 {
+                     foreach (var t in asm.GetTypes())
+                     {
+-                        if (t.Name == shortName && typeof(VolumeComponent).IsAssignableFrom(t)) return t;
++                        if (t.Name != shortName || !typeof(VolumeComponent).IsAssignableFrom(t)) continue;
++
++                        if (t.Namespace == "UnityEngine.Rendering.Universal") return t;
++                        fallback ??= t;
+                     }
+                 }
+                 catch { /* Assembly ohne lesbare Typen ueberspringen */ }
+             }
+-            return null;
++            return fallback;
+         }
+ 
+         private VolumeComponent EnsureOverride(string shortName)
+@@ -277,8 +287,15 @@ namespace WAD.CameraFx
+ 
+                 if (createdOverrides.TryGetValue(b.Type, out var existing) && existing != null) return existing;
+ 
+-                var comp = volume.profile.Add(b.Type, true);
+-                if (comp == null) return null;
++                // VolumeProfile.Add() wirft eine InvalidOperationException, wenn die Komponente schon im
++                // Profil liegt (z.B. wenn das Level-Volume bereits eine Vignette enthaelt). Darum erst suchen.
++                if (!volume.profile.TryGet(b.Type, out VolumeComponent comp) || comp == null)
++                {
++                    comp = volume.profile.Add(b.Type, true);
++                    if (comp == null) return null;
++
++                    ownedOverrideTypes.Add(b.Type);
++                }
+ 
+                 comp.active = true;
+                 createdOverrides[b.Type] = comp;
+@@ -303,6 +320,13 @@ namespace WAD.CameraFx
+             }
+         }
+ 
++
++        private static void ForceOverride(object param)
++        {
++            var prop = param.GetType().GetProperty("overrideState", BindingFlags.Public | BindingFlags.Instance);
++            if (prop != null && prop.CanWrite) prop.SetValue(param, true);
++        }
++
+         private static void SetParam(VolumeComponent comp, string name, float value)
+         {
+             var field = comp.GetType().GetField(name, BindingFlags.Public | BindingFlags.Instance);
+@@ -316,6 +340,7 @@ namespace WAD.CameraFx
+             if (valueField == null) return;
+ 
+             valueField.SetValue(param, value);
++            ForceOverride(param);
+             field.SetValue(comp, param);
+         }
+ 
+@@ -332,6 +357,7 @@ namespace WAD.CameraFx
+             if (valueField == null) return;
+ 
+             valueField.SetValue(param, value);
++            ForceOverride(param);
+             field.SetValue(comp, param);
+         }
+ 
+@@ -348,6 +374,7 @@ namespace WAD.CameraFx
+             if (valueField == null) return;
+ 
+             if (valueField.FieldType == typeof(bool)) valueField.SetValue(param, value);
++            ForceOverride(param);
+         }
+ 
+         private static void SetEnumParam(VolumeComponent comp, string name, string enumValueName)
+@@ -361,6 +388,7 @@ namespace WAD.CameraFx
+             var valueField = param.GetType().GetField("m_Value", BindingFlags.NonPublic | BindingFlags.Instance);
+             if (valueField == null) return;
+ 
++            ForceOverride(param);
+             try { valueField.SetValue(param, Enum.Parse(valueField.FieldType, enumValueName, true)); }
+             catch { /* Enum-Wert existiert in dieser URP-Version nicht */ }
+         }
+diff --git a/Assets/Scripts/WAD/Weapons/ShellCasingBehaviour.cs b/Assets/Scripts/WAD/Weapons/ShellCasingBehaviour.cs
+index 529c32c..8c33095 100644
+--- a/Assets/Scripts/WAD/Weapons/ShellCasingBehaviour.cs
++++ b/Assets/Scripts/WAD/Weapons/ShellCasingBehaviour.cs
+@@ -4,29 +4,112 @@ namespace WAD.Weapons.Casings
+ {
+     /// <summary>
+     /// Liegt auf dem Huelsen-Prefab selbst (AmmoTypeSO.casingPrefab).
+-    /// Spielt beim ersten Bodenkontakt einen metallischen "Klick"-Sound ab.
++    ///
++    /// - Spielt beim ersten Bodenkontakt einen metallischen "Klick"-Sound ab.
++    /// - Spieler-Kollision: Eine Huelse kollidiert normal mit der Welt (Boden, Waende, andere Huelsen),
++    ///   aber NICHT mit dem Spieler, solange sie in der Luft ist bzw. noch rollt. Vorher konnte man auf
++    ///   fliegende Huelsen treten (der CharacterController wurde nach oben gedrueckt/blockiert), und die
++    ///   Huelse - ein 5-10 cm grosser, 1 kg schwerer Kollider - hat den Spieler am Auswurfschacht sogar angeschoben.
++    ///   Sobald sie zur Ruhe kommt, bekommt sie einen winzigen Zusatz-Kollider ("PlayerContact"), mit dem sie
++    ///   fuer den Spieler nur noch ein sehr kleines Objekt ist; der grosse Kollider ignoriert den Spieler dauerhaft.
+     /// </summary>
+     [RequireComponent(typeof(Rigidbody))]
+     public class ShellCasingBehaviour : MonoBehaviour
+     {
++        [Header("Sound")]
+         public AudioClip[] landSounds;
+         [Range(0f, 1f)] public float landVolume = 0.5f;
+         [Tooltip("Mindest-Aufprallgeschwindigkeit, damit ueberhaupt ein Sound abgespielt wird (verhindert Sound bei sanftem Absetzen)")]
+         public float minImpactVelocity = 0.5f;
+ 
++        [Header("Interaktion mit dem Spieler")]
++        [Tooltip("Radius (in Metern, Weltgroesse) des winzigen Kolliders, mit dem eine zur Ruhe gekommene Huelse den Spieler beruehrt")]
++        public float playerContactRadius = 0.006f;
++        [Tooltip("Unterhalb dieser Geschwindigkeit (m/s) gilt die Huelse nach einem Bodenkontakt als 'zur Ruhe gekommen'")]
++        public float settleSpeed = 0.35f;
++        [Tooltip("So lange (Sekunden) muss sie langsam sein, bevor der Spieler-Kontakt aktiviert wird")]
++        public float settleTime = 0.2f;
++        [Tooltip("Spaetestens nach dieser Zeit (Sekunden) wird der Spieler-Kontakt aktiviert, falls die Huelse nie richtig zur Ruhe kommt")]
++        public float maxFlightTime = 3f;
++
+         private bool hasPlayedLandSound;
++        private bool hasTouchedSurface;
++        private bool inFlight;
++        private float flightStartTime;
++        private float slowTime;
+         private AudioSource audioSource;
++        private Rigidbody body;
+ 
+         private void Awake()
+         {
++            body = GetComponent<Rigidbody>();
++
+             audioSource = GetComponent<AudioSource>();
+             if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
+             audioSource.playOnAwake = false;
+             audioSource.spatialBlend = 1f; // 3D-Sound
+         }
+ 
++        /// <summary>
++        /// Vom Ejector direkt nach dem Instanziieren aufgerufen: Die Huelse ignoriert ab sofort alle
++        /// uebergebenen Spieler-Collider (muss VOR dem ersten Physik-Schritt passieren, weil sie am
++        /// Auswurfschacht innerhalb des Spielers entsteht).
++        /// </summary>
++        public void BeginFlight(Collider[] playerColliders)
++        {
++            var own = GetComponentsInChildren<Collider>();
++
++            if (playerColliders != null)
++            {
++                foreach (var mine in own)
++                {
++                    if (mine == null) continue;
++
++                    foreach (var theirs in playerColliders)
++                    {
++                        if (theirs != null) Physics.IgnoreCollision(mine, theirs, true);
++                    }
++                }
++            }
++
++            inFlight = true;
++            flightStartTime = Time.time;
++            slowTime = 0f;
++        }
++
++        private void FixedUpdate()
++        {
++            if (!inFlight) return;
++
++            bool slowEnough = hasTouchedSurface && body.linearVelocity.magnitude < settleSpeed;
++            slowTime = slowEnough ? slowTime + Time.fixedDeltaTime : 0f;
++
++            if (slowTime >= settleTime || Time.time - flightStartTime >= maxFlightTime)
++            {
++                EnablePlayerContact();
++            }
++        }
++
++        private void EnablePlayerContact()
++        {
++            inFlight = false;
++
++            // Kleiner Zusatz-Kollider am selben Rigidbody. Er ist von den Spieler-Collidern NICHT ausgenommen,
++            // der grosse Hauptkollider bleibt es dauerhaft - fuer den Spieler ist die Huelse also nur noch winzig.
++            var contact = new GameObject("PlayerContact");
++            contact.transform.SetParent(transform, false);
++
++            var sphere = contact.AddComponent<SphereCollider>();
++
++            Vector3 scale = transform.lossyScale;
++            float maxScale = Mathf.Max(0.0001f, Mathf.Max(scale.x, Mathf.Max(scale.y, scale.z)));
++            sphere.radius = playerContactRadius / maxScale;
++        }
++
+         private void OnCollisionEnter(Collision collision)
+         {
++            hasTouchedSurface = true;
++
+             if (hasPlayedLandSound) return;
+             if (collision.relativeVelocity.magnitude < minImpactVelocity) return;
+ 
+@@ -38,4 +121,4 @@ namespace WAD.Weapons.Casings
+             }
+         }
+     }
+-}
+\ No newline at end of file
++}
+diff --git a/Assets/Scripts/WAD/Weapons/ShellCasingEjector.cs b/Assets/Scripts/WAD/Weapons/ShellCasingEjector.cs
+index 6411bf6..8b8c8d1 100644
+--- a/Assets/Scripts/WAD/Weapons/ShellCasingEjector.cs
++++ b/Assets/Scripts/WAD/Weapons/ShellCasingEjector.cs
+@@ -26,6 +26,24 @@ namespace WAD.Weapons.Casings
+         [Header("Aufraeumen")]
+         public float destroyAfterSeconds = 10f;
+ 
++        // Alle Collider des Spielers (CharacterController, Hitboxen ...): fliegende Huelsen ignorieren sie
++        private Collider[] playerColliders;
++
++        private Collider[] GetPlayerColliders()
++        {
++            if (playerColliders != null && playerColliders.Length > 0 && playerColliders[0] != null) return playerColliders;
++
++            // Die Waffe haengt unter dem Spieler: der CharacterController markiert die Spieler-Wurzel
++            var controller = GetComponentInParent<CharacterController>();
++            if (controller == null) controller = FindFirstObjectByType<CharacterController>();
++
++            playerColliders = controller != null
++                ? controller.GetComponentsInChildren<Collider>(true)
++                : System.Array.Empty<Collider>();
++
++            return playerColliders;
++        }
++
+         /// <summary> Von WeaponController nach jedem Schuss aufgerufen. </summary>
+         public void EjectCasing(GameObject casingPrefab)
+         {
+@@ -36,6 +54,11 @@ namespace WAD.Weapons.Casings
+             var rb = casing.GetComponent<Rigidbody>();
+             if (rb == null) rb = casing.AddComponent<Rigidbody>();
+ 
++            // Spieler-Kollision regeln (fliegende Huelsen duerfen weder als Plattform dienen noch den Spieler schieben)
++            var behaviour = casing.GetComponent<ShellCasingBehaviour>();
++            if (behaviour == null) behaviour = casing.AddComponent<ShellCasingBehaviour>();
++            behaviour.BeginFlight(GetPlayerColliders());
++
+             Vector3 ejectDirection = ejectionPort.right
+                 + Vector3.up * upwardForceMultiplier
+                 + (-ejectionPort.forward) * backwardForceMultiplier;
+diff --git a/Assets/Scripts/WAD/Weapons/WeaponController.cs b/Assets/Scripts/WAD/Weapons/WeaponController.cs
+index 489f139..faac5b1 100644
+--- a/Assets/Scripts/WAD/Weapons/WeaponController.cs
++++ b/Assets/Scripts/WAD/Weapons/WeaponController.cs
+@@ -64,6 +64,15 @@ namespace WAD.Weapons
+                  "und durch die Mittellinie des Optik-Modells ersetzt. Behebt, dass die Waffe seitlich versetzt wirkt, wenn der Aim Point " +
+                  "im Optik-Prefab um Millimeter neben der Mitte sitzt. Nur aktivieren, wenn der Optik-Montagepunkt der Waffe auf ihrer Mittellinie liegt.")]
+         public bool autoCenterOpticLaterally = false;
++        [Tooltip("Dreht die Waffe beim Zielen exakt in Blickrichtung der Kamera (Visierachse = Kamera-Vorwaerts, Oben = Kamera-Oben). " +
++                 "Noetig fuer Waffen OHNE ADS-Animation: Der WeaponSocket traegt eine Huefthaltung (seitlich/nach oben gedreht und um ca. 25 Grad " +
++                 "gerollt), die beim Zielen sonst bestehen bleibt - die Visierung sitzt dann nie genau vor der Kamera. " +
++                 "Waffen MIT Animator (G3, AKM, M27) lassen das aus, dort uebernimmt die Animation das Ausrichten.")]
++        public bool alignRotationOnADS = false;
++        [Tooltip("Achse des Modells (im Modell-Root-Raum), die beim Zielen nach VORN zeigen soll (= Visierlinie/Laufrichtung). Mesh-Frame der Waffen: +Y.")]
++        public Vector3 sightForwardAxis = Vector3.up;
++        [Tooltip("Achse des Modells (im Modell-Root-Raum), die beim Zielen nach OBEN zeigen soll. Mesh-Frame der Waffen: +Z.")]
++        public Vector3 sightUpAxis = Vector3.forward;
+         [Tooltip("Sichtfeld (FOV) der Kamera, wenn NICHT gezielt wird. Vorher fest auf 60 verdrahtet.")]
+         public float hipFOV = 60f;
+ 
+@@ -274,10 +283,22 @@ namespace WAD.Weapons
+             if (aimPoint == null) aimPoint = defaultIronSightAimPoint;
+ 
+             Vector3 targetLocalPosition = Vector3.zero;
++            Quaternion targetLocalRotation = Quaternion.identity;
++            bool alignRotation = alignRotationOnADS;
+ 
+             if (IsAiming && aimPoint != null)
+             {
+                 Vector3 originalLocalPos = transform.localPosition;
++                Quaternion originalLocalRot = transform.localRotation;
++
++                // Zuerst die Zielrotation bestimmen und fuer die Positionsberechnung temporaer anwenden -
++                // die Position des Aim Points haengt von der Waffenrotation ab.
++                if (alignRotation)
++                {
++                    targetLocalRotation = ComputeSightAlignedLocalRotation();
++                    transform.localRotation = targetLocalRotation;
++                }
++
+                 transform.localPosition = Vector3.zero;
+ 
+                 Vector3 aimWorldPosition = aimPoint.position;
+@@ -293,11 +314,41 @@ namespace WAD.Weapons
+                 Vector3 localOffsetNeeded = transform.parent.InverseTransformVector(worldOffsetNeeded);
+ 
+                 transform.localPosition = originalLocalPos;
++                transform.localRotation = originalLocalRot;
+                 targetLocalPosition = localOffsetNeeded;
+             }
+ 
+-            transform.localPosition = Vector3.Lerp(transform.localPosition, targetLocalPosition,
+-                adsPositionLerpSpeed * Time.deltaTime);
++            float lerp = adsPositionLerpSpeed * Time.deltaTime;
++
++            transform.localPosition = Vector3.Lerp(transform.localPosition, targetLocalPosition, lerp);
++
++            if (alignRotation)
++            {
++                transform.localRotation = Quaternion.Slerp(transform.localRotation, targetLocalRotation, lerp);
++            }
++        }
++
++        /// <summary>
++        /// Lokale Rotation (relativ zum WeaponSocket), bei der Visierachse und Oben-Achse der Waffe
++        /// exakt mit Vorwaerts/Oben der Kamera uebereinstimmen.
++        /// </summary>
++        private Quaternion ComputeSightAlignedLocalRotation()
++        {
++            Transform frame = modelRoot != null ? modelRoot : transform;
++
++            Vector3 forward = frame.TransformDirection(sightForwardAxis);
++            Vector3 up = frame.TransformDirection(sightUpAxis);
++
++            if (forward.sqrMagnitude < 1e-6f || up.sqrMagnitude < 1e-6f || Mathf.Abs(Vector3.Dot(forward.normalized, up.normalized)) > 0.999f)
++            {
++                return transform.localRotation; // ungueltige Achsen-Einstellung: nichts veraendern
++            }
++
++            Quaternion modelFrame = Quaternion.LookRotation(forward, up);
++            Quaternion cameraFrame = Quaternion.LookRotation(playerCamera.transform.forward, playerCamera.transform.up);
++
++            Quaternion targetWorld = cameraFrame * Quaternion.Inverse(modelFrame) * transform.rotation;
++            return Quaternion.Inverse(transform.parent.rotation) * targetWorld;
+         }
+ 
+         private void HandleFireInput()
+-- 
+2.43.0
+

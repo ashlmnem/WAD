@@ -444,6 +444,7 @@ MonoBehaviour:
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
   defaultIronSightAimPoint: {fileID: 8596952377058541985}
   autoCenterOpticLaterally: 1
+  alignRotationOnADS: 1
   adsPositionLerpSpeed: 10
 --- !u!114 &6678873023715160492
 MonoBehaviour:

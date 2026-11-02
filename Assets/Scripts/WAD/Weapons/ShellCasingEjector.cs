@@ -26,6 +26,24 @@ namespace WAD.Weapons.Casings
         [Header("Aufraeumen")]
         public float destroyAfterSeconds = 10f;
 
+        // Alle Collider des Spielers (CharacterController, Hitboxen ...): fliegende Huelsen ignorieren sie
+        private Collider[] playerColliders;
+
+        private Collider[] GetPlayerColliders()
+        {
+            if (playerColliders != null && playerColliders.Length > 0 && playerColliders[0] != null) return playerColliders;
+
+            // Die Waffe haengt unter dem Spieler: der CharacterController markiert die Spieler-Wurzel
+            var controller = GetComponentInParent<CharacterController>();
+            if (controller == null) controller = FindFirstObjectByType<CharacterController>();
+
+            playerColliders = controller != null
+                ? controller.GetComponentsInChildren<Collider>(true)
+                : System.Array.Empty<Collider>();
+
+            return playerColliders;
+        }
+
         /// <summary> Von WeaponController nach jedem Schuss aufgerufen. </summary>
         public void EjectCasing(GameObject casingPrefab)
         {
@@ -35,6 +53,11 @@ namespace WAD.Weapons.Casings
 
             var rb = casing.GetComponent<Rigidbody>();
             if (rb == null) rb = casing.AddComponent<Rigidbody>();
+
+            // Spieler-Kollision regeln (fliegende Huelsen duerfen weder als Plattform dienen noch den Spieler schieben)
+            var behaviour = casing.GetComponent<ShellCasingBehaviour>();
+            if (behaviour == null) behaviour = casing.AddComponent<ShellCasingBehaviour>();
+            behaviour.BeginFlight(GetPlayerColliders());
 
             Vector3 ejectDirection = ejectionPort.right
                 + Vector3.up * upwardForceMultiplier

@@ -64,6 +64,15 @@ namespace WAD.Weapons
                  "und durch die Mittellinie des Optik-Modells ersetzt. Behebt, dass die Waffe seitlich versetzt wirkt, wenn der Aim Point " +
                  "im Optik-Prefab um Millimeter neben der Mitte sitzt. Nur aktivieren, wenn der Optik-Montagepunkt der Waffe auf ihrer Mittellinie liegt.")]
         public bool autoCenterOpticLaterally = false;
+        [Tooltip("Dreht die Waffe beim Zielen exakt in Blickrichtung der Kamera (Visierachse = Kamera-Vorwaerts, Oben = Kamera-Oben). " +
+                 "Noetig fuer Waffen OHNE ADS-Animation: Der WeaponSocket traegt eine Huefthaltung (seitlich/nach oben gedreht und um ca. 25 Grad " +
+                 "gerollt), die beim Zielen sonst bestehen bleibt - die Visierung sitzt dann nie genau vor der Kamera. " +
+                 "Waffen MIT Animator (G3, AKM, M27) lassen das aus, dort uebernimmt die Animation das Ausrichten.")]
+        public bool alignRotationOnADS = false;
+        [Tooltip("Achse des Modells (im Modell-Root-Raum), die beim Zielen nach VORN zeigen soll (= Visierlinie/Laufrichtung). Mesh-Frame der Waffen: +Y.")]
+        public Vector3 sightForwardAxis = Vector3.up;
+        [Tooltip("Achse des Modells (im Modell-Root-Raum), die beim Zielen nach OBEN zeigen soll. Mesh-Frame der Waffen: +Z.")]
+        public Vector3 sightUpAxis = Vector3.forward;
         [Tooltip("Sichtfeld (FOV) der Kamera, wenn NICHT gezielt wird. Vorher fest auf 60 verdrahtet.")]
         public float hipFOV = 60f;
 
@@ -274,10 +283,22 @@ namespace WAD.Weapons
             if (aimPoint == null) aimPoint = defaultIronSightAimPoint;
 
             Vector3 targetLocalPosition = Vector3.zero;
+            Quaternion targetLocalRotation = Quaternion.identity;
+            bool alignRotation = alignRotationOnADS;
 
             if (IsAiming && aimPoint != null)
             {
                 Vector3 originalLocalPos = transform.localPosition;
+                Quaternion originalLocalRot = transform.localRotation;
+
+                // Zuerst die Zielrotation bestimmen und fuer die Positionsberechnung temporaer anwenden -
+                // die Position des Aim Points haengt von der Waffenrotation ab.
+                if (alignRotation)
+                {
+                    targetLocalRotation = ComputeSightAlignedLocalRotation();
+                    transform.localRotation = targetLocalRotation;
+                }
+
                 transform.localPosition = Vector3.zero;
 
                 Vector3 aimWorldPosition = aimPoint.position;
@@ -293,11 +314,41 @@ namespace WAD.Weapons
                 Vector3 localOffsetNeeded = transform.parent.InverseTransformVector(worldOffsetNeeded);
 
                 transform.localPosition = originalLocalPos;
+                transform.localRotation = originalLocalRot;
                 targetLocalPosition = localOffsetNeeded;
             }
 
-            transform.localPosition = Vector3.Lerp(transform.localPosition, targetLocalPosition,
-                adsPositionLerpSpeed * Time.deltaTime);
+            float lerp = adsPositionLerpSpeed * Time.deltaTime;
+
+            transform.localPosition = Vector3.Lerp(transform.localPosition, targetLocalPosition, lerp);
+
+            if (alignRotation)
+            {
+                transform.localRotation = Quaternion.Slerp(transform.localRotation, targetLocalRotation, lerp);
+            }
+        }
+
+        /// <summary>
+        /// Lokale Rotation (relativ zum WeaponSocket), bei der Visierachse und Oben-Achse der Waffe
+        /// exakt mit Vorwaerts/Oben der Kamera uebereinstimmen.
+        /// </summary>
+        private Quaternion ComputeSightAlignedLocalRotation()
+        {
+            Transform frame = modelRoot != null ? modelRoot : transform;
+
+            Vector3 forward = frame.TransformDirection(sightForwardAxis);
+            Vector3 up = frame.TransformDirection(sightUpAxis);
+
+            if (forward.sqrMagnitude < 1e-6f || up.sqrMagnitude < 1e-6f || Mathf.Abs(Vector3.Dot(forward.normalized, up.normalized)) > 0.999f)
+            {
+                return transform.localRotation; // ungueltige Achsen-Einstellung: nichts veraendern
+            }
+
+            Quaternion modelFrame = Quaternion.LookRotation(forward, up);
+            Quaternion cameraFrame = Quaternion.LookRotation(playerCamera.transform.forward, playerCamera.transform.up);
+
+            Quaternion targetWorld = cameraFrame * Quaternion.Inverse(modelFrame) * transform.rotation;
+            return Quaternion.Inverse(transform.parent.rotation) * targetWorld;
         }
 
         private void HandleFireInput()
