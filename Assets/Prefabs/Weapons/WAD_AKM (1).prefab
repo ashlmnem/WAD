@@ -273,7 +273,7 @@ Transform:
   m_GameObject: {fileID: 6732054113964569505}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.005, y: -0.096, z: 1.903}
+  m_LocalPosition: {x: 0.0000013304609, y: -0.10000028, z: 1.8900012}
   m_LocalScale: {x: 7.1428566, y: 7.1428576, z: 7.1428576}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -466,6 +466,7 @@ MonoBehaviour:
   muzzlePoint: {fileID: 7739479873520775648}
   playerCamera: {fileID: 0}
   movementController: {fileID: 0}
+  cameraLook: {fileID: 0}
   attachments: {fileID: 0}
   playerLean: {fileID: 0}
   casingEjector: {fileID: 4164738448402595564}
@@ -494,6 +495,12 @@ MonoBehaviour:
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
   defaultIronSightAimPoint: {fileID: 8177152251706099495}
   adsPositionLerpSpeed: 10
+  autoCenterOpticLaterally: 0
+  alignRotationOnADS: 1
+  sightForwardAxis: {x: 0, y: 1, z: 0}
+  sightUpAxis: {x: 0, y: 0, z: 1}
+  hipFOV: 60
+  dryFireCooldown: 0.25
 --- !u!114 &5816663751995080935
 MonoBehaviour:
   m_ObjectHideFlags: 0

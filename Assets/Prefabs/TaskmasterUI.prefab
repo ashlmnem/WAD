@@ -178,7 +178,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: TaskRequirements
+  m_Text: 
 --- !u!1 &3499168989288808697
 GameObject:
   m_ObjectHideFlags: 0
@@ -197,7 +197,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2615770566581964424
 RectTransform:
   m_ObjectHideFlags: 0
@@ -294,7 +294,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 5444019143241897127}
   m_OnClick:
     m_PersistentCalls:
@@ -377,7 +377,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: TaskTitle
+  m_Text: Keine Aufgabe ausgewaehlt
 --- !u!1 &5595851497941266273
 GameObject:
   m_ObjectHideFlags: 0
@@ -690,7 +690,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: TaskDescription
+  m_Text: 
 --- !u!1 &7661761090483958814
 GameObject:
   m_ObjectHideFlags: 0
@@ -938,7 +938,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: TaskReward
+  m_Text: 
 --- !u!1 &8793687864164721628
 GameObject:
   m_ObjectHideFlags: 0
