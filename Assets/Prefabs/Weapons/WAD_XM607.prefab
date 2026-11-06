@@ -155,6 +155,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5348290688732449234}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &7424780297872416883
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8538276054214703230}
+  m_Layer: 0
+  m_Name: AttachmentPoint_Optic_Handguard
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8538276054214703230
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7424780297872416883}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.273, z: 0.58}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5348290688732449234}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7581316520147476446
 GameObject:
   m_ObjectHideFlags: 0
@@ -354,6 +385,10 @@ PrefabInstance:
       addedObject: {fileID: 5967095325677710825}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
         type: 3}
+      insertIndex: 3
+      addedObject: {fileID: 8538276054214703230}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
+        type: 3}
       insertIndex: -1
       addedObject: {fileID: 3509056591688426468}
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6141d578a2ae789488e6ef7d95c7a5c4,
@@ -416,6 +451,7 @@ MonoBehaviour:
   muzzlePoint: {fileID: 5784183870871206332}
   playerCamera: {fileID: 0}
   movementController: {fileID: 0}
+  cameraLook: {fileID: 0}
   attachments: {fileID: 1295093216018247859}
   playerLean: {fileID: 0}
   casingEjector: {fileID: 2231849544373353776}
@@ -443,9 +479,13 @@ MonoBehaviour:
   modelRoot: {fileID: 5348290688732449234}
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
   defaultIronSightAimPoint: {fileID: 8596952377058541985}
+  adsPositionLerpSpeed: 10
   autoCenterOpticLaterally: 1
   alignRotationOnADS: 1
-  adsPositionLerpSpeed: 10
+  sightForwardAxis: {x: 0, y: 1, z: 0}
+  sightUpAxis: {x: 0, y: 0, z: 1}
+  hipFOV: 60
+  dryFireCooldown: 0.25
 --- !u!114 &6678873023715160492
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -487,6 +527,9 @@ MonoBehaviour:
   - railId: MagPoint
     mountTransform: {fileID: 0}
     acceptedCategories: 05000000
+  - railId: HandguardUpperRail
+    mountTransform: {fileID: 8538276054214703230}
+    acceptedCategories: 01000000
 --- !u!114 &-5763808023867022172
 MonoBehaviour:
   m_ObjectHideFlags: 0

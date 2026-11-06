@@ -20,6 +20,8 @@ GameObject:
   - component: {fileID: 2627454720712334877}
   - component: {fileID: 1530776165358996067}
   - component: {fileID: 5655560355844633161}
+  - component: {fileID: 7841803346285113056}
+  - component: {fileID: 8533963091928205102}
   m_Layer: 10
   m_Name: Player
   m_TagString: Player
@@ -396,6 +398,55 @@ MonoBehaviour:
   movementController: {fileID: 8100776886399052573}
   limbHealthSystem: {fileID: 0}
   maxHealth: 100
+  deathSequence: {fileID: 7841803346285113056}
+--- !u!114 &7841803346285113056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965413385953013310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ec53082c62742ca956457ea5db831ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  deathCamera: {fileID: 0}
+  cameraFallDuration: 1.1
+  cameraDeathRotation: {x: 55, y: 0, z: 18}
+  cameraDropOffset: {x: 0, y: -0.25, z: -0.12}
+  deathSound: {fileID: 8300000, guid: 14ef95196a79b494aab3ef0907ce0876, type: 3}
+  deathSoundVolume: 1
+  flashDelay: 0.1
+  flashInDuration: 0.12
+  whiteHoldDuration: 0.2
+  flashPeakAlpha: 1
+  mainMenuSceneName: MainMenu
+  menuLoadDelay: 0.25
+--- !u!114 &8533963091928205102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 965413385953013310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdb19b61b7904661b07efb8943a4769e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponHolder: {fileID: 1556950061433652186}
+  armsPrefab: {fileID: 0}
+  createPlaceholderWhenNoPrefab: 1
+  armsParent: {fileID: 0}
+  rightForearmPosition: {x: 1.35, y: -3.2, z: -0.15}
+  rightForearmScale: {x: 0.55, y: 3.4, z: 0.55}
+  rightHandPosition: {x: 1.35, y: -0.25, z: 0.2}
+  leftForearmPosition: {x: -1.35, y: 1.1, z: -0.15}
+  leftForearmScale: {x: 0.55, y: 3.1, z: 0.55}
+  leftHandPosition: {x: -1.35, y: 2.5, z: 0.2}
+  sleeveColor: {r: 0.23, g: 0.26, b: 0.19, a: 1}
+  gloveColor: {r: 0.18, g: 0.17, b: 0.13, a: 1}
 --- !u!1 &1129923444180768639
 GameObject:
   m_ObjectHideFlags: 0

@@ -61,6 +61,7 @@ namespace WAD.Vehicles
         public void RollRequirements()
         {
             activeRequirements.Clear();
+            delivered.Clear();
             IsRepaired = false;
 
             if (possibleParts == null || possibleParts.Count == 0)
@@ -72,13 +73,22 @@ namespace WAD.Vehicles
 
             var rng = randomSeed != 0 ? new System.Random(randomSeed) : new System.Random();
 
-            int wanted = Mathf.Clamp(
-                rng.Next(distinctPartsRange.x, distinctPartsRange.y + 1),
-                1,
-                possibleParts.Count);
+            var pool = new List<ItemRequirement>();
+            foreach (var part in possibleParts)
+            {
+                if (part != null && part.itemAsset != null) pool.Add(part);
+            }
 
-            // Kandidaten kopieren und mischen, dann die ersten 'wanted' nehmen
-            var pool = new List<ItemRequirement>(possibleParts);
+            if (pool.Count == 0)
+            {
+                IsRepaired = true;
+                return;
+            }
+
+            int minParts = Mathf.Clamp(Mathf.Min(distinctPartsRange.x, distinctPartsRange.y), 1, pool.Count);
+            int maxParts = Mathf.Clamp(Mathf.Max(distinctPartsRange.x, distinctPartsRange.y), minParts, pool.Count);
+            int wanted = rng.Next(minParts, maxParts + 1);
+
             for (int i = pool.Count - 1; i > 0; i--)
             {
                 int j = rng.Next(i + 1);
@@ -93,7 +103,9 @@ namespace WAD.Vehicles
                 activeRequirements.Add(new ItemRequirement
                 {
                     itemAsset = source.itemAsset,
-                    quantity = rng.Next(quantityPerPartRange.x, quantityPerPartRange.y + 1)
+                    quantity = rng.Next(
+                        Mathf.Max(1, Mathf.Min(quantityPerPartRange.x, quantityPerPartRange.y)),
+                        Mathf.Max(1, Mathf.Max(quantityPerPartRange.x, quantityPerPartRange.y)) + 1)
                 });
             }
 

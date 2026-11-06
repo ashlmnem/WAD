@@ -1,6 +1,8 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using WAD.Inventory;
+using WAD.Procedural;
 
 namespace WAD.Weapons
 {
@@ -15,6 +17,9 @@ namespace WAD.Weapons
     public class MagazineWorldSpawner : MonoBehaviour
     {
         [Header("Quelle")]
+        [Tooltip("Procedural grid to wait for before searching for ground. Empty = find one in the scene.")]
+        public ProceduralGridGenerator gridGenerator;
+        [Min(0f)] public float worldReadyTimeout = 8f;
         [Tooltip("Katalog aller Magazin-Typen. Leer = automatisch gesucht.")]
         public MagazineCatalogSO magazineCatalog;
         [Tooltip("Alternativ: feste Liste von Magazin-Typen (überstimmt den Katalog)")]
@@ -23,6 +28,7 @@ namespace WAD.Weapons
         [Header("Menge")]
         [Tooltip("Wie viele Magazine im Level erscheinen")]
         public Vector2Int spawnCountRange = new Vector2Int(4, 8);
+        [Min(0)] public int maxSpawnCount = 64;
 
         [Header("Platzierung")]
         public Transform spawnAreaCenter;
@@ -58,8 +64,50 @@ namespace WAD.Weapons
         public bool parentToThis = true;
         public bool logPlacements = false;
 
+        private bool worldHasSpawnedChunk;
+
+        private void Awake()
+        {
+            if (gridGenerator == null) gridGenerator = GetComponent<ProceduralGridGenerator>();
+            if (gridGenerator == null) gridGenerator = FindFirstObjectByType<ProceduralGridGenerator>();
+        }
+
+        private void OnEnable()
+        {
+            if (gridGenerator != null) gridGenerator.OnChunkSpawned += HandleChunkSpawned;
+        }
+
+        private void OnDisable()
+        {
+            if (gridGenerator != null) gridGenerator.OnChunkSpawned -= HandleChunkSpawned;
+        }
+
         private void Start()
         {
+            if (gridGenerator == null)
+            {
+                SpawnMagazines();
+                return;
+            }
+
+            StartCoroutine(SpawnWhenWorldIsReady());
+        }
+
+        private void HandleChunkSpawned(GameObject chunk, Vector2Int coord)
+        {
+            worldHasSpawnedChunk = true;
+        }
+
+        private IEnumerator SpawnWhenWorldIsReady()
+        {
+            float elapsed = 0f;
+            while (!worldHasSpawnedChunk && elapsed < worldReadyTimeout)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            yield return null;
             SpawnMagazines();
         }
 
@@ -67,6 +115,7 @@ namespace WAD.Weapons
         public void SpawnMagazines()
         {
             if (magazineCatalog == null) magazineCatalog = MagazineCatalogSO.Instance;
+            if (specificMagazineTypes == null) specificMagazineTypes = new List<MagazineTypeSO>();
             if (magazineCatalog == null && specificMagazineTypes.Count == 0)
             {
                 Debug.LogWarning($"[MagazineWorldSpawner:{name}] Weder Katalog noch feste Magazin-Typen zugewiesen - es wird nichts erzeugt. " +
@@ -75,8 +124,10 @@ namespace WAD.Weapons
             }
 
             var rng = randomSeed != 0 ? new System.Random(randomSeed) : new System.Random();
-            Vector3 center = spawnAreaCenter != null ? spawnAreaCenter.position : transform.position;
             Transform player = FindPlayerTransform();
+            Vector3 center = spawnAreaCenter != null
+                ? spawnAreaCenter.position
+                : player != null ? player.position : transform.position;
 
             var pool = BuildPool();
             if (pool.Count == 0)
@@ -85,7 +136,10 @@ namespace WAD.Weapons
                 return;
             }
 
-            int count = rng.Next(spawnCountRange.x, spawnCountRange.y + 1);
+            int safeMaximum = Mathf.Clamp(maxSpawnCount, 0, 128);
+            int upperBound = Mathf.Clamp(Mathf.Max(spawnCountRange.x, spawnCountRange.y), 0, safeMaximum);
+            int lowerBound = Mathf.Clamp(Mathf.Min(spawnCountRange.x, spawnCountRange.y), 0, upperBound);
+            int count = rng.Next(lowerBound, upperBound + 1);
             var placed = new List<Vector3>();
             int spawned = 0;
 
@@ -111,9 +165,11 @@ namespace WAD.Weapons
         {
             var pool = new List<MagazineTypeSO>();
 
-            IEnumerable<MagazineTypeSO> source = specificMagazineTypes != null && specificMagazineTypes.Count > 0
+            IEnumerable<MagazineTypeSO> source = specificMagazineTypes.Count > 0
                 ? specificMagazineTypes
-                : (magazineCatalog != null ? magazineCatalog.allMagazineTypes : new List<MagazineTypeSO>());
+                : (magazineCatalog != null && magazineCatalog.allMagazineTypes != null
+                    ? magazineCatalog.allMagazineTypes
+                    : new List<MagazineTypeSO>());
 
             foreach (var mag in source)
             {
@@ -190,7 +246,8 @@ namespace WAD.Weapons
                 if (tooClose) continue;
 
                 Vector3 rayStart = candidate + Vector3.up * raycastStartHeight;
-                if (!Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit, raycastStartHeight * 2f, groundLayers)) continue;
+                if (!Physics.Raycast(rayStart, Vector3.down, out RaycastHit hit,
+                    Mathf.Max(1f, raycastStartHeight * 2f), groundLayers, QueryTriggerInteraction.Ignore)) continue;
 
                 if (Vector3.Angle(hit.normal, Vector3.up) > maxGroundSlope) continue;
 

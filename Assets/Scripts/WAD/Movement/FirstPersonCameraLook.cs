@@ -51,6 +51,16 @@ namespace WAD.Player
         private float reloadPitchOffset;
         private float reloadRollOffset;
 
+        public void SyncLookToCurrentPose()
+        {
+            if (playerBody != null) yaw = playerBody.localEulerAngles.y;
+
+            float currentPitch = transform.localEulerAngles.x;
+            pitch = currentPitch > 180f ? currentPitch - 360f : currentPitch;
+            smoothedInput = Vector2.zero;
+            currentLookVelocity = Vector2.zero;
+        }
+
         private void Start()
         {
             Cursor.lockState = CursorLockMode.Locked;

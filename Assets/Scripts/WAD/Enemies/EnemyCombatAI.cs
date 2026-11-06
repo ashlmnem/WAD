@@ -33,6 +33,7 @@ namespace WAD.Enemies
         public float loseSightGraceTime = 1.5f; // Zeit ohne Sichtlinie, bevor auf Suppressive Fire umgeschaltet wird
         public float suppressiveFireDuration = 4f;
         public float suppressiveFireCooldown = 2f;
+        [Min(1f)] public float suppressiveSpreadMultiplier = 3f;
 
         private EnemyController enemy;
         private NavMeshAgent agent;
@@ -217,11 +218,7 @@ namespace WAD.Enemies
             if (Time.time - lastSuppressiveShotTime >= suppressiveFireCooldown)
             {
                 lastSuppressiveShotTime = Time.time;
-                // Feuert "blind" - kein garantierter Treffer, daher hier KEIN
-                // enemy.ExecuteAttack() (das wuerde IMMER Schaden verursachen).
-                // Stattdessen nur visuelles/akustisches Feedback (Muendungsfeuer,
-                // Sound ueber EnemyAudio) - reiner Druck-Effekt auf den Spieler.
-                // TODO: optional geringe Trefferchance einbauen, falls gewuenscht.
+                enemy.ExecuteSuppressiveFire(lastKnownPlayerPosition, suppressiveSpreadMultiplier);
             }
         }
 

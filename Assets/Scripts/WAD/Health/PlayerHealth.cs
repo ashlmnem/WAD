@@ -19,11 +19,13 @@ namespace WAD.Player
     /// die Fuehrung: LimbHealthSystem ist die Quelle der Wahrheit fuer HP,
     /// PlayerHealth spiegelt sie und feuert den Todespfad.
     /// </summary>
+    [RequireComponent(typeof(PlayerDeathSequence))]
     public class PlayerHealth : MonoBehaviour, IDamageable
     {
         [Header("Referenzen")]
         public InventoryManager inventory;
         public TarkovMovementController movementController;
+        public PlayerDeathSequence deathSequence;
         [Tooltip("Wird automatisch gesucht, falls leer. Quelle der Wahrheit fuer die HP.")]
         public LimbHealthSystem limbHealthSystem;
 
@@ -43,6 +45,7 @@ namespace WAD.Player
         private void Awake()
         {
             if (limbHealthSystem == null) limbHealthSystem = GetComponent<LimbHealthSystem>();
+            if (deathSequence == null) deathSequence = GetComponent<PlayerDeathSequence>();
             currentHealth = maxHealth;
         }
 
@@ -53,9 +56,9 @@ namespace WAD.Player
             limbHealthSystem.OnLimbDamaged += HandleLimbDamaged;
             limbHealthSystem.OnHealed += HandleLimbHealed;
             limbHealthSystem.OnDied += Die;
-
-            SyncFromLimbs();
         }
+
+        private void Start() => SyncFromLimbs();
 
         private void OnDisable()
         {
@@ -138,8 +141,7 @@ namespace WAD.Player
             if (inventory != null) inventory.ClearOnDeath();
 
             RunStateManager.Instance?.OnDeath();
-
-            // TODO: Death-Screen/Respawn-Logik, sobald das UI dafuer steht
+            deathSequence?.Play();
         }
 
         /// <summary> Fuer Respawn/neuen Run: HP zuruecksetzen. </summary>

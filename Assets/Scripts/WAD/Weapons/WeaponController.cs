@@ -129,6 +129,20 @@ namespace WAD.Weapons
         /// <summary> Von PlayerWeaponHolder aufgerufen - verhindert, dass lose in der Welt liegende Waffen auf Eingaben reagieren. </summary>
         public void SetEquipped(bool equipped) => isEquipped = equipped;
 
+        public void SetAttachmentManager(WeaponAttachmentManager manager)
+        {
+            if (attachments == manager) return;
+
+            if (attachments != null) attachments.OnAttachmentsChanged -= ApplyMagazineTypeOverride;
+            attachments = manager;
+
+            if (attachments != null)
+            {
+                attachments.OnAttachmentsChanged += ApplyMagazineTypeOverride;
+                ApplyMagazineTypeOverride();
+            }
+        }
+
         private void Awake()
         {
             if (modelRoot != null)
@@ -138,10 +152,8 @@ namespace WAD.Weapons
 
             EnsureAudioSource();
 
-            if (attachments != null)
-            {
-                attachments.OnAttachmentsChanged += ApplyMagazineTypeOverride;
-            }
+            if (attachments == null) attachments = GetComponent<WeaponAttachmentManager>();
+            if (attachments != null) attachments.OnAttachmentsChanged += ApplyMagazineTypeOverride;
         }
 
         /// <summary>
@@ -426,27 +438,89 @@ namespace WAD.Weapons
             }
         }
 
+        public bool TryFireAt(Vector3 targetPoint, float spreadMultiplier = 1f)
+        {
+            if (weaponData == null || !isActiveAndEnabled || isReloading) return false;
+            if (weaponData.fireMode == FireMode.BoltAction && !isChamberedRoundReady) return false;
+            if (Time.time - lastFireTime < weaponData.SecondsBetweenShots) return false;
+
+            if (loadedMagazine == null || loadedMagazine.IsEmpty)
+            {
+                PlayDryFireSound();
+                TryReload();
+                return false;
+            }
+
+            if (loadedMagazine.ammoType == null)
+            {
+                PlayDryFireSound();
+                return false;
+            }
+
+            Vector3 origin = muzzlePoint != null ? muzzlePoint.position : transform.position;
+            if ((targetPoint - origin).sqrMagnitude < 0.0001f) return false;
+
+            loadedMagazine.TryConsumeRound();
+            lastFireTime = Time.time;
+            FireRaycastAt(origin, targetPoint, spreadMultiplier);
+            ApplyRecoil();
+            NotifyAmmoChanged();
+            OnFired?.Invoke();
+            GlobalOnFired?.Invoke();
+
+            if (weaponData.fireMode == FireMode.BoltAction)
+            {
+                isChamberedRoundReady = false;
+                StartCoroutine(CycleBoltRoutine());
+            }
+
+            return true;
+        }
+
         private void FireRaycast()
         {
             if (playerCamera == null) return;
 
-            float spread = IsAiming ? weaponData.adsSpreadDegrees : weaponData.baseSpreadDegrees;
+            FireRaycastFrom(playerCamera.transform.position, playerCamera.transform.forward, false, 1f);
+        }
+
+        private void FireRaycastAt(Vector3 origin, Vector3 targetPoint, float spreadMultiplier)
+        {
+            FireRaycastFrom(origin, (targetPoint - origin).normalized, true, spreadMultiplier);
+        }
+
+        private void FireRaycastFrom(Vector3 origin, Vector3 forward, bool ignoreShooter, float spreadMultiplier)
+        {
+            if (loadedMagazine == null || loadedMagazine.ammoType == null) return;
+
+            float spread = !ignoreShooter && IsAiming ? weaponData.adsSpreadDegrees : weaponData.baseSpreadDegrees;
             spread += currentRecoilAccumulated * 0.3f;
 
             float attachmentSpreadMult = attachments != null ? attachments.GetSpreadMultiplier() : 1f;
-            spread *= attachmentSpreadMult;
+            spread *= attachmentSpreadMult * (ignoreShooter ? Mathf.Max(0f, spreadMultiplier) : 1f);
 
-            if (IsBlindFiring) spread *= blindFireSpreadMultiplier;
+            if (!ignoreShooter && IsBlindFiring) spread *= blindFireSpreadMultiplier;
 
-            Vector3 direction = ApplySpread(playerCamera.transform.forward, spread);
+            Vector3 direction = ApplySpread(forward, spread);
 
-            Debug.DrawRay(playerCamera.transform.position, direction * weaponData.maxRange, Color.red, 0.5f);
+            Debug.DrawRay(origin, direction * weaponData.maxRange, Color.red, 0.5f);
 
-            Vector3 impactPoint = playerCamera.transform.position + direction * weaponData.maxRange;
+            Vector3 impactPoint = origin + direction * weaponData.maxRange;
             Collider primaryHitCollider = null;
 
-            if (Physics.Raycast(playerCamera.transform.position, direction, out RaycastHit hit,
-                weaponData.maxRange, hittableLayers, QueryTriggerInteraction.Ignore))
+            bool didHit;
+            RaycastHit hit = default;
+            if (ignoreShooter)
+            {
+                didHit = RaycastIgnoringShooter(origin, direction, out hit);
+            }
+            else
+            {
+                didHit = Physics.Raycast(origin, direction, out hit, weaponData.maxRange, hittableLayers,
+                    QueryTriggerInteraction.Ignore);
+            }
+
+            if (didHit)
             {
                 impactPoint = hit.point;
                 primaryHitCollider = hit.collider;
@@ -465,7 +539,7 @@ namespace WAD.Weapons
                 }
             }
 
-            NotifyNearMisses(playerCamera.transform.position, direction, weaponData.maxRange, primaryHitCollider);
+            if (!ignoreShooter) NotifyNearMisses(origin, direction, weaponData.maxRange, primaryHitCollider);
 
             if (weaponData.muzzleFlashPrefab != null && muzzlePoint != null)
             {
@@ -496,6 +570,30 @@ namespace WAD.Weapons
             {
                 animator.SetTrigger(fireTrigger);
             }
+        }
+
+        private readonly RaycastHit[] shooterRaycastBuffer = new RaycastHit[32];
+
+        private bool RaycastIgnoringShooter(Vector3 origin, Vector3 direction, out RaycastHit closestHit)
+        {
+            int hitCount = Physics.RaycastNonAlloc(origin, direction, shooterRaycastBuffer, weaponData.maxRange,
+                hittableLayers, QueryTriggerInteraction.Ignore);
+            float closestDistance = float.PositiveInfinity;
+            closestHit = default;
+            bool foundHit = false;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit candidate = shooterRaycastBuffer[i];
+                if (candidate.collider == null || candidate.collider.transform.root == transform.root) continue;
+                if (candidate.distance >= closestDistance) continue;
+
+                closestDistance = candidate.distance;
+                closestHit = candidate;
+                foundHit = true;
+            }
+
+            return foundHit;
         }
 
         // Wiederverwendete Puffer: SphereCastAll alloziert pro Schuss ein neues Array (GC-Spikes bei Vollauto).

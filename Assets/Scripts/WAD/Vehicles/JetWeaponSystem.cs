@@ -77,6 +77,25 @@ namespace WAD.Vehicles
 
             return System.Array.Empty<Transform>();
         }
+
+        public Transform GetNextMuzzle()
+        {
+            if (muzzlePoints != null && muzzlePoints.Length > 0)
+            {
+                Transform result = muzzlePoints[muzzleIndex % muzzlePoints.Length];
+                muzzleIndex++;
+                return result;
+            }
+
+            if (muzzleContainer != null && muzzleContainer.childCount > 0)
+            {
+                Transform result = muzzleContainer.GetChild(muzzleIndex % muzzleContainer.childCount);
+                muzzleIndex++;
+                return result;
+            }
+
+            return null;
+        }
     }
 
     /// <summary>
@@ -105,6 +124,7 @@ namespace WAD.Vehicles
         public float muzzleFlashLifetime = 0.1f;
 
         private ActionFeedbackPlayer feedback;
+        private static readonly RaycastHit[] jetRaycastBuffer = new RaycastHit[64];
 
         private void Awake()
         {
@@ -114,9 +134,13 @@ namespace WAD.Vehicles
 
         private void InitializeSlots()
         {
+            if (weaponSlots == null) weaponSlots = System.Array.Empty<JetWeaponSlot>();
+
             foreach (var slot in weaponSlots)
             {
                 if (slot == null) continue;
+                slot.magazineSize = Mathf.Max(0, slot.magazineSize);
+                slot.spareMagazines = Mathf.Max(0, slot.spareMagazines);
                 slot.currentAmmo = slot.magazineSize;
                 slot.spare = slot.spareMagazines;
                 slot.muzzleIndex = 0;
@@ -167,12 +191,11 @@ namespace WAD.Vehicles
             slot.lastFireTime = Time.time;
             slot.currentAmmo--;
 
-            Transform[] muzzles = slot.ResolveMuzzles();
-            Transform muzzle = muzzles.Length > 0 ? muzzles[slot.muzzleIndex % muzzles.Length] : transform;
-            slot.muzzleIndex++;
+            Transform muzzle = slot.GetNextMuzzle();
+            if (muzzle == null) muzzle = transform;
 
             if (slot.isRocket) FireRocket(slot, muzzle);
-            else FireBullet(slot, muzzle, muzzles.Length);
+            else FireBullet(slot, muzzle);
 
             feedback?.Play(slot.isRocket ? slot.rocketFireAction : slot.fireAction);
             SpawnMuzzleFlash(muzzle);
@@ -227,7 +250,7 @@ namespace WAD.Vehicles
             return muzzle.forward;
         }
 
-        private void FireBullet(JetWeaponSlot slot, Transform muzzle, int muzzleCount)
+        private void FireBullet(JetWeaponSlot slot, Transform muzzle)
         {
             int pellets = Mathf.Max(1, slot.pelletsPerShot);
             float spread = slot.spreadDegrees;
@@ -247,7 +270,7 @@ namespace WAD.Vehicles
 
                 Vector3 endPoint = muzzle.position + dir * slot.maxRange;
 
-                if (Physics.Raycast(muzzle.position, dir, out RaycastHit hit, slot.maxRange, hittableLayers))
+                if (RaycastIgnoringJet(muzzle.position, dir, slot.maxRange, out RaycastHit hit))
                 {
                     endPoint = hit.point;
 
@@ -256,7 +279,8 @@ namespace WAD.Vehicles
 
                     if (slot.ammoType != null && slot.ammoType.impactVFXPrefab != null)
                     {
-                        Instantiate(slot.ammoType.impactVFXPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+                        GameObject impact = Instantiate(slot.ammoType.impactVFXPrefab, hit.point, Quaternion.LookRotation(hit.normal));
+                        if (slot.ammoType.impactVFXLifetime > 0f) Destroy(impact, slot.ammoType.impactVFXLifetime);
                     }
                 }
 
@@ -287,11 +311,34 @@ namespace WAD.Vehicles
 
             // Kein Raketen-Prefab: direkt als Explosion am Einschlagpunkt auswerten
             Vector3 endPoint = muzzle.position + direction * slot.maxRange;
-            if (Physics.Raycast(muzzle.position, direction, out RaycastHit hit, slot.maxRange, hittableLayers))
+            if (RaycastIgnoringJet(muzzle.position, direction, slot.maxRange, out RaycastHit hit))
             {
                 endPoint = hit.point;
             }
             Explode(endPoint, slot.explosionRadius, slot.explosionDamage);
+        }
+
+        private bool RaycastIgnoringJet(Vector3 origin, Vector3 direction, float maxDistance, out RaycastHit closestHit)
+        {
+            int hitCount = Physics.RaycastNonAlloc(origin, direction, jetRaycastBuffer, maxDistance, hittableLayers,
+                QueryTriggerInteraction.Ignore);
+
+            closestHit = default;
+            float closestDistance = float.PositiveInfinity;
+            bool foundHit = false;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit candidate = jetRaycastBuffer[i];
+                if (candidate.collider == null || candidate.collider.transform.root == transform.root) continue;
+                if (candidate.distance >= closestDistance) continue;
+
+                closestDistance = candidate.distance;
+                closestHit = candidate;
+                foundHit = true;
+            }
+
+            return foundHit;
         }
 
         private void Explode(Vector3 position, float radius, float damage)

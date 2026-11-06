@@ -28,8 +28,20 @@ namespace WAD.Player
         public PlayerWeaponHolder weaponHolder;
         [Tooltip("Optionales separates Arm-Prefab (Weg B). Leer = Arme sind Teil des Waffenmodells.")]
         public GameObject armsPrefab;
+        [Tooltip("Erzeugt einen einfachen, austauschbaren Blockout, bis ein echtes Arm-Prefab zugewiesen wird.")]
+        public bool createPlaceholderWhenNoPrefab = true;
         [Tooltip("Elternobjekt fuer das Arm-Prefab. Leer = dieses Transform.")]
         public Transform armsParent;
+
+        [Header("Arm-Blockout")]
+        public Vector3 rightForearmPosition = new Vector3(1.35f, -3.2f, -0.15f);
+        public Vector3 rightForearmScale = new Vector3(0.55f, 3.4f, 0.55f);
+        public Vector3 rightHandPosition = new Vector3(1.35f, -0.25f, 0.2f);
+        public Vector3 leftForearmPosition = new Vector3(-1.35f, 1.1f, -0.15f);
+        public Vector3 leftForearmScale = new Vector3(0.55f, 3.1f, 0.55f);
+        public Vector3 leftHandPosition = new Vector3(-1.35f, 2.5f, 0.2f);
+        public Color sleeveColor = new Color(0.23f, 0.26f, 0.19f, 1f);
+        public Color gloveColor = new Color(0.18f, 0.17f, 0.13f, 1f);
 
         [Header("Referenzen (bei Weg A im Waffen-Prefab zuweisen)")]
         [Tooltip("Transform im Waffen-Prefab, an dem die rechte Hand sitzt")]
@@ -92,12 +104,14 @@ namespace WAD.Player
         private Vector3 currentSprintBlend;
         private Vector3 bobPhase;
         private float phase;
+        private MaterialPropertyBlock placeholderProperties;
 
         private void Awake()
         {
             if (weaponHolder == null) weaponHolder = GetComponentInParent<PlayerWeaponHolder>();
             cameraLook = GetComponentInParent<FirstPersonCameraLook>();
             movement = GetComponentInParent<TarkovMovementController>();
+            placeholderProperties = new MaterialPropertyBlock();
             if (armsParent == null) armsParent = transform;
 
             phase = Random.value * 100f;
@@ -108,6 +122,42 @@ namespace WAD.Player
                 armsRoot = armsInstance.transform;
                 AttachArmsToWeapon();
             }
+            else if (createPlaceholderWhenNoPrefab)
+            {
+                CreatePlaceholderArms();
+            }
+        }
+
+        private void CreatePlaceholderArms()
+        {
+            armsInstance = new GameObject("ArmsPlaceholder");
+            armsRoot = armsInstance.transform;
+            armsRoot.SetParent(armsParent, false);
+
+            CreatePlaceholderLimb("RightForearm", rightForearmPosition, rightForearmScale, sleeveColor);
+            CreatePlaceholderLimb("RightHand", rightHandPosition, Vector3.one * 0.5f, gloveColor);
+            CreatePlaceholderLimb("LeftForearm", leftForearmPosition, leftForearmScale, sleeveColor);
+            CreatePlaceholderLimb("LeftHand", leftHandPosition, Vector3.one * 0.5f, gloveColor);
+        }
+
+        private void CreatePlaceholderLimb(string limbName, Vector3 localPosition, Vector3 localScale, Color color)
+        {
+            GameObject limb = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            limb.name = limbName;
+            limb.layer = 2;
+            limb.transform.SetParent(armsRoot, false);
+            limb.transform.localPosition = localPosition;
+            limb.transform.localScale = localScale;
+
+            var collider = limb.GetComponent<Collider>();
+            if (collider != null) collider.enabled = false;
+
+            var renderer = limb.GetComponent<Renderer>();
+            if (renderer == null) return;
+
+            placeholderProperties.SetColor("_BaseColor", color);
+            placeholderProperties.SetColor("_Color", color);
+            renderer.SetPropertyBlock(placeholderProperties);
         }
 
         private void LateUpdate()

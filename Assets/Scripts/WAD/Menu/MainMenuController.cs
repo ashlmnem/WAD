@@ -12,6 +12,7 @@ namespace WAD.UI
         [Header("Szenen-Namen (exakt wie in Build Settings)")]
         public string firstLevelSceneName = "SampleScene";
         public string shootingRangeSceneName = "ShootingRange";
+        public AudioClip menuMusic;
 
         [Header("Loadout-Menue-Panel")]
         public GameObject loadoutMenuPanel;
@@ -22,6 +23,11 @@ namespace WAD.UI
             // machen - der Sperrzustand ueberlebt sonst den Szenenwechsel.
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+
+            if (WAD.Audio.MusicManager.Instance != null)
+            {
+                WAD.Audio.MusicManager.Instance.PlayTrack(menuMusic, loop: true);
+            }
         }
 
         [Header("Continue-Verfuegbarkeit")]

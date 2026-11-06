@@ -34,6 +34,9 @@ namespace WAD.Core
         [Header("Inventar (nur das, was NACH Extraktion gesichert wird)")]
         public List<InventoryItem> carriedItems = new List<InventoryItem>();
 
+        [Header("Gesichertes Inventar")]
+        public List<InventoryItem> stashItems = new List<InventoryItem>();
+
         [Header("Kampfjet-Treibstoff (Punkt 2, ueber Taskmaster-Aufgaben verdient)")]
         public float jetFuel = 0f;
 
@@ -96,7 +99,17 @@ namespace WAD.Core
         public void OnExtraction()
         {
             Debug.Log("[RunState] Extraktion erfolgreich - Loot gesichert.");
-            // TODO: StashManager.Instance.CommitItems(carriedItems);
+            foreach (var item in carriedItems)
+            {
+                if (item == null) continue;
+
+                stashItems.Add(new InventoryItem
+                {
+                    itemId = item.itemId,
+                    quantity = item.quantity
+                });
+            }
+
             carriedItems.Clear();
             flags.Clear();
             jetFuel = 0f;

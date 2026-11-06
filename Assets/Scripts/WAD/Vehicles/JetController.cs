@@ -71,11 +71,13 @@ namespace WAD.Vehicles
         private JetState state = JetState.Parked;
         private PlayerInteraction currentPilot;
         private Camera pilotCamera;
-        private Transform originalCameraParent;
-        private Vector3 originalCameraLocalPosition;
-        private Quaternion originalCameraLocalRotation;
         private float originalCameraFOV;
         private FirstPersonCameraLook pilotLook;
+        private Transform originalPilotParent;
+        private Vector3 originalPilotLocalPosition;
+        private Quaternion originalPilotLocalRotation;
+        private Vector3 originalPilotLocalScale;
+        private bool pilotLookWasEnabled;
         private TarkovMovementController pilotMovement;
         private CharacterController pilotCharacterController;
 
@@ -87,6 +89,7 @@ namespace WAD.Vehicles
         private bool afterburnerWasActive;
         private bool verticalMode;
         private bool wasAirborne;
+        private static readonly RaycastHit[] flightCollisionBuffer = new RaycastHit[32];
 
         public JetState State => state;
         public bool IsFlyable => state == JetState.Ready || state == JetState.Flying;
@@ -113,8 +116,8 @@ namespace WAD.Vehicles
         private void Awake()
         {
             feedback = GetComponent<ActionFeedbackPlayer>();
-            if (repairSystem == null) repairSystem = GetComponent<JetRepairSystem>();
-            if (weaponSystem == null) weaponSystem = GetComponent<JetWeaponSystem>();
+            if (repairSystem == null) repairSystem = GetComponentInChildren<JetRepairSystem>(true);
+            if (weaponSystem == null) weaponSystem = GetComponentInChildren<JetWeaponSystem>(true);
         }
 
         public void Interact(PlayerInteraction interactor)
@@ -155,21 +158,38 @@ namespace WAD.Vehicles
             pilotMovement = pilot.GetComponent<TarkovMovementController>();
             pilotCharacterController = pilot.GetComponent<CharacterController>();
 
-            // Steuerung des Spielers stilllegen
-            if (pilotMovement != null) pilotMovement.enabled = false;
-            if (pilotLook != null) pilotLook.enabled = false;
+            originalPilotParent = pilot.transform.parent;
+            originalPilotLocalPosition = pilot.transform.localPosition;
+            originalPilotLocalRotation = pilot.transform.localRotation;
+            originalPilotLocalScale = pilot.transform.localScale;
+            pilotLookWasEnabled = pilotLook != null && pilotLook.enabled;
 
-            // Kamera uebernehmen, aber spaeter exakt zurueckgeben
+            Vector3 cameraOffset = pilotCamera != null
+                ? pilot.transform.InverseTransformVector(pilotCamera.transform.position - pilot.transform.position)
+                : Vector3.zero;
+
+            if (pilotCharacterController != null) pilotCharacterController.enabled = false;
+
+            // Keep the player and camera in the Jet's frame so both travel together.
+            pilot.transform.SetParent(transform, worldPositionStays: false);
+            pilot.transform.localRotation = Quaternion.identity;
+            pilot.transform.localScale = originalPilotLocalScale;
+
             if (pilotCamera != null)
             {
-                originalCameraParent = pilotCamera.transform.parent;
-                originalCameraLocalPosition = pilotCamera.transform.localPosition;
-                originalCameraLocalRotation = pilotCamera.transform.localRotation;
+                Vector3 seatCameraPosition = cockpitCameraPoint != null
+                    ? cockpitCameraPoint.position
+                    : transform.TransformPoint(flightProfile != null ? flightProfile.cameraLocalOffset : Vector3.zero);
+                pilot.transform.position = seatCameraPosition - pilot.transform.rotation * cameraOffset;
                 originalCameraFOV = pilotCamera.fieldOfView;
-                pilotCamera.transform.SetParent(cockpitCameraPoint != null ? cockpitCameraPoint : transform, false);
-                pilotCamera.transform.localPosition = cockpitCameraPoint != null ? Vector3.zero : (flightProfile != null ? flightProfile.cameraLocalOffset : Vector3.zero);
                 pilotCamera.fieldOfView = flightProfile != null ? flightProfile.cameraFOV : 70f;
             }
+
+            // Keep camera input active, but synchronize its accumulated yaw/pitch
+            // after moving the player under the Jet.
+            if (pilotLook != null) pilotLook.SyncLookToCurrentPose();
+
+            if (pilotMovement != null) pilotMovement.enabled = false;
 
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -192,7 +212,7 @@ namespace WAD.Vehicles
 
             while (t < duration)
             {
-                t += Time.deltaTime;
+                t += Time.unscaledDeltaTime;
 
                 float spinUp = duration > 0f ? Mathf.Clamp01(t / duration) : 1f;
 
@@ -222,31 +242,38 @@ namespace WAD.Vehicles
             PlayFeedback(ActionId.JetEngineShutdown);
 
             float duration = keepEngineRunningAfterExit ? 0f : (flightProfile != null ? flightProfile.engineShutdownSeconds : 2f);
-            if (duration > 0f) yield return new WaitForSeconds(duration);
+            if (duration > 0f) yield return new WaitForSecondsRealtime(duration);
 
             // Triebwerksschleife ausblenden (laueft weiter, wenn der Motor laufen soll)
             if (!keepEngineRunningAfterExit) feedback?.StopLoop();
 
-            // Kamera zurueckgeben
-            if (pilotCamera != null)
-            {
-                pilotCamera.transform.SetParent(originalCameraParent, false);
-                pilotCamera.transform.localPosition = originalCameraLocalPosition;
-                pilotCamera.transform.localRotation = originalCameraLocalRotation;
-                pilotCamera.fieldOfView = originalCameraFOV;
-            }
+            if (pilotLook != null) pilotLook.enabled = false;
+            if (pilotCharacterController != null) pilotCharacterController.enabled = false;
 
-            // Spieler neben dem Jet absetzen
+            // Restore the player's hierarchy before placing them beside the Jet.
             if (placePlayerOnExit && currentPilot != null)
             {
                 Vector3 exitPos = FindSafeExitPosition();
-                if (pilotCharacterController != null) pilotCharacterController.enabled = false;
+                currentPilot.transform.SetParent(originalPilotParent, worldPositionStays: false);
+                currentPilot.transform.localPosition = originalPilotLocalPosition;
+                currentPilot.transform.localRotation = originalPilotLocalRotation;
+                currentPilot.transform.localScale = originalPilotLocalScale;
                 currentPilot.transform.position = exitPos;
-                if (pilotCharacterController != null) pilotCharacterController.enabled = true;
+            }
+            else if (currentPilot != null)
+            {
+                currentPilot.transform.SetParent(originalPilotParent, worldPositionStays: true);
             }
 
+            if (pilotCamera != null) pilotCamera.fieldOfView = originalCameraFOV;
+            if (pilotCharacterController != null) pilotCharacterController.enabled = true;
+
             if (pilotMovement != null) pilotMovement.enabled = true;
-            if (pilotLook != null) pilotLook.enabled = true;
+            if (pilotLook != null)
+            {
+                pilotLook.SyncLookToCurrentPose();
+                pilotLook.enabled = pilotLookWasEnabled;
+            }
 
             currentPilot = null;
             throttle = 0f;
@@ -255,7 +282,8 @@ namespace WAD.Vehicles
             state = keepEngineRunningAfterExit ? JetState.Ready : JetState.Parked;
 
             PlayFeedback(ActionId.WeaponHolster);
-            OnPilotExited?.Invoke(this);        }
+            OnPilotExited?.Invoke(this);
+        }
 
         private Vector3 FindSafeExitPosition()
         {
@@ -299,7 +327,7 @@ namespace WAD.Vehicles
                 if (Input.GetKeyDown(interactExitKey)) ExitJet();
             }
 
-            if (weaponSystem != null && currentPilot != null)
+            if (weaponSystem != null && currentPilot != null && (state == JetState.Ready || state == JetState.Flying))
             {
                 weaponSystem.TickPilotInput();
             }
@@ -328,16 +356,16 @@ namespace WAD.Vehicles
             if (Input.GetKey(yawRightKey)) yaw += 1f;
             if (Input.GetKey(yawLeftKey)) yaw -= 1f;
 
+            if (pilotCamera != null)
+            {
+                Vector3 cameraDirection = transform.InverseTransformDirection(pilotCamera.transform.forward);
+                pitch -= cameraDirection.y;
+                yaw += cameraDirection.x;
+            }
+
             float roll = 0f;
             if (Input.GetKey(rollRightKey)) roll += 1f;
             if (Input.GetKey(rollLeftKey)) roll -= 1f;
-
-            // Maus als Alternative fuer Nick/Gier
-            if (Cursor.lockState == CursorLockMode.Locked)
-            {
-                pitch -= Input.GetAxisRaw("Mouse Y") * 1.5f;
-                yaw += Input.GetAxisRaw("Mouse X") * 1.5f;
-            }
 
             float response = flightProfile != null ? flightProfile.controlResponse : 3.5f;
             Vector3 targetControl = new Vector3(Mathf.Clamp(roll, -1f, 1f), Mathf.Clamp(pitch, -1f, 1f), Mathf.Clamp(yaw, -1f, 1f));
@@ -411,7 +439,7 @@ namespace WAD.Vehicles
             if (motion.sqrMagnitude > 0.0001f)
             {
                 LayerMask mask = collisionLayers & ~ignoreLayers;
-                if (Physics.SphereCast(transform.position, p.collisionRadius, motion.normalized, out RaycastHit hit, motion.magnitude, mask))
+                if (TryGetFlightCollision(motion.normalized, motion.magnitude, mask, out RaycastHit hit))
                 {
                     // Aufprall: eigener Crash-Sound, Schaden-VFX-Slot
                     PlayFeedback(ActionId.JetCrash);
@@ -437,6 +465,29 @@ namespace WAD.Vehicles
 
             // --- Treibstoff ---
             ConsumeFuel(dt, p);
+        }
+
+        private bool TryGetFlightCollision(Vector3 direction, float distance, LayerMask mask, out RaycastHit closestHit)
+        {
+            int hitCount = Physics.SphereCastNonAlloc(transform.position, flightProfile.collisionRadius, direction,
+                flightCollisionBuffer, distance, mask, QueryTriggerInteraction.Ignore);
+
+            closestHit = default;
+            float closestDistance = float.PositiveInfinity;
+            bool foundHit = false;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit candidate = flightCollisionBuffer[i];
+                if (candidate.collider == null || candidate.collider.transform.root == transform.root) continue;
+                if (candidate.distance >= closestDistance) continue;
+
+                closestDistance = candidate.distance;
+                closestHit = candidate;
+                foundHit = true;
+            }
+
+            return foundHit;
         }
 
         /// <summary>

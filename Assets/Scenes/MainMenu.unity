@@ -5467,6 +5467,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   firstLevelSceneName: SampleScene
   shootingRangeSceneName: ShootingRange
+  menuMusic: {fileID: 8300000, guid: be2643058921c0f4cab8388b97db839b, type: 3}
   loadoutMenuPanel: {fileID: 1546517124}
 --- !u!4 &1948657355
 Transform:

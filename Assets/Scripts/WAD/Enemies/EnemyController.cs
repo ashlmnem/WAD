@@ -56,6 +56,7 @@ namespace WAD.Enemies
 
         private NavMeshAgent agent;
         private LimbHealthSystem limbHealth;
+        private EnemyWeaponLoadout weaponLoadout;
         private Transform playerTransform;
         private EnemyState state = EnemyState.Patrol;
         private float baseAgentSpeed;
@@ -82,6 +83,7 @@ namespace WAD.Enemies
         {
             agent = GetComponent<NavMeshAgent>();
             limbHealth = GetComponent<LimbHealthSystem>();
+            weaponLoadout = GetComponent<EnemyWeaponLoadout>();
             baseAgentSpeed = agent.speed;
         }
 
@@ -312,6 +314,12 @@ namespace WAD.Enemies
             SetDestinationSafe(transform.position);
             transform.LookAt(new Vector3(playerTransform.position.x, transform.position.y, playerTransform.position.z));
 
+            if (weaponLoadout != null && weaponLoadout.HasWeapon)
+            {
+                weaponLoadout.FireAt(GetPlayerAimPoint());
+                return;
+            }
+
             if (Time.time - lastAttackTime >= attackCooldown)
             {
                 lastAttackTime = Time.time;
@@ -321,9 +329,34 @@ namespace WAD.Enemies
 
         public void ExecuteAttack()
         {
+            if (weaponLoadout != null && weaponLoadout.HasWeapon)
+            {
+                if (playerTransform != null) weaponLoadout.FireAt(GetPlayerAimPoint());
+                return;
+            }
+
             if (Time.time - lastAttackTime < attackCooldown) return;
             lastAttackTime = Time.time;
             PerformAttack();
+        }
+
+        public void ExecuteSuppressiveFire(Vector3 targetPoint, float spreadMultiplier)
+        {
+            if (weaponLoadout != null && weaponLoadout.HasWeapon)
+            {
+                weaponLoadout.FireAt(targetPoint, spreadMultiplier);
+            }
+        }
+
+        public Vector3 GetPlayerAimPoint()
+        {
+            if (playerTransform == null) return transform.position;
+
+            var targetHealth = playerTransform != null
+                ? playerTransform.GetComponentInParent<LimbHealthSystem>()
+                : null;
+
+            return targetHealth != null ? targetHealth.transform.position : playerTransform.position;
         }
 
         /// <summary> Von EnemySuppressionController: versetzt den Gegner sofort in Kampfbereitschaft (Punkt 8). </summary>

@@ -132,7 +132,7 @@ namespace WAD.Weapons
             // ADS-FOV und Zielpunkt der Optik komplett ignoriert.
             if (weapon.attachments == null)
             {
-                weapon.attachments = weapon.GetComponent<WAD.Weapons.Attachments.WeaponAttachmentManager>();
+                weapon.SetAttachmentManager(weapon.GetComponent<WAD.Weapons.Attachments.WeaponAttachmentManager>());
             }
 
             // Blindfeuer braucht den Lean-Zustand des Spielers.

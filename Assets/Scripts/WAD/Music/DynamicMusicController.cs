@@ -34,6 +34,7 @@ namespace WAD.Levels
         private MusicState currentMusicState = MusicState.Idle;
         private float timeSinceLastCombat = 999f;
         private float checkTimer;
+        private bool hasAppliedInitialState;
 
         private void Update()
         {
@@ -64,10 +65,14 @@ namespace WAD.Levels
             else if (isInCombat) targetState = MusicState.Combat;
             else targetState = MusicState.Idle;
 
-            if (targetState != currentMusicState)
+            if (!hasAppliedInitialState || targetState != currentMusicState)
             {
                 currentMusicState = targetState;
-                ApplyMusicState(targetState);
+                if (MusicManager.Instance != null)
+                {
+                    ApplyMusicState(targetState);
+                    hasAppliedInitialState = true;
+                }
             }
         }
 

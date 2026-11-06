@@ -407,16 +407,19 @@ MonoBehaviour:
   jetPrefabs:
   - {fileID: 2764082734867638211, guid: 2834bc54640c58b458c3796dd2b15751, type: 3}
   spawnCountRange: {x: 1, y: 2}
+  gridGenerator: {fileID: 311638849}
+  worldReadyTimeout: 8
   spawnAreaCenter: {fileID: 0}
-  spawnAreaRadius: 1000
-  minDistanceFromPlayer: 200
-  minDistanceBetweenJets: 500
-  maxGroundSlope: 12
+  spawnAreaRadius: 120
+  minDistanceFromPlayer: 50
+  minDistanceBetweenJets: 40
+  maxGroundSlope: 20
   groundLayers:
     serializedVersion: 2
     m_Bits: 961
   raycastStartHeight: 200
-  placementAttempts: 60
+  heightAboveGround: 0.4
+  placementAttempts: 120
   randomSeed: 0
   parentToThis: 1
   repairSeedRange: {x: 1, y: 999999}
@@ -433,13 +436,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a61f9c11e8541acafa768c8335c9f3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WAD.Weapons.MagazineWorldSpawner
+  gridGenerator: {fileID: 311638849}
+  worldReadyTimeout: 8
   magazineCatalog: {fileID: 11400000, guid: fbe20fa031c449a492691f78e2689236, type: 2}
   specificMagazineTypes: []
-  spawnCountRange: {x: 20, y: 10000}
+  spawnCountRange: {x: 12, y: 20}
+  maxSpawnCount: 32
   spawnAreaCenter: {fileID: 0}
-  spawnAreaRadius: 15000
+  spawnAreaRadius: 130
   minDistanceFromPlayer: 20
-  minDistanceBetweenMagazines: 50
+  minDistanceBetweenMagazines: 10
   maxGroundSlope: 30
   heightAboveGround: 0.1
   groundLayers:
