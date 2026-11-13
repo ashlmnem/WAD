@@ -59,7 +59,7 @@ namespace WAD.Weapons
         public bool requiresChamberAfterReload = false;
 
         [Header("Genauigkeit & Recoil")]
-        public float baseSpreadDegrees = 1.5f;
+        public float baseSpreadDegrees = 0.08f;
         public float adsSpreadDegrees = 0.3f;
         public float recoilPerShot = 1.8f;
         public float horizontalRecoilPerShot = 0.4f;
@@ -75,6 +75,9 @@ namespace WAD.Weapons
         [Header("ADS")]
         public float adsFOV = 45f;
         public float adsTransitionSpeed = 8f;
+
+        [Header("Animation")]
+        public WeaponAnimationProfile animationProfile;
 
         [Header("VFX & Sound")]
         public GameObject muzzleFlashPrefab;

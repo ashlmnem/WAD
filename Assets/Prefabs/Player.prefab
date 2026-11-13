@@ -42,7 +42,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1067641479899840568}
   - {fileID: 1231145271447741576}
   - {fileID: 7683344035001286636}
   - {fileID: 8468991323495298616}
@@ -353,6 +352,9 @@ MonoBehaviour:
   - {fileID: 8300000, guid: dc060ca439626604b9cdb176e5364a43, type: 3}
   walkStepInterval: 0.5
   sprintStepInterval: 0.32
+  walkNoiseRadius: 22
+  sprintNoiseRadius: 60
+  crouchNoiseRadius: 10
   hurtSounds:
   - {fileID: 8300000, guid: 8608ce6a3fb30a148bf47c9f3693d345, type: 3}
   - {fileID: 8300000, guid: 493fa31fc6899d24fbaf4b36226dbfe5, type: 3}
@@ -396,9 +398,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inventory: {fileID: 6732290555380524132}
   movementController: {fileID: 8100776886399052573}
+  deathSequence: {fileID: 7841803346285113056}
   limbHealthSystem: {fileID: 0}
   maxHealth: 100
-  deathSequence: {fileID: 7841803346285113056}
 --- !u!114 &7841803346285113056
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -436,17 +438,46 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   weaponHolder: {fileID: 1556950061433652186}
-  armsPrefab: {fileID: 0}
-  createPlaceholderWhenNoPrefab: 1
+  armsPrefab: {fileID: 919132149155446097, guid: 21d5a719751de574e9322bd89060550a,
+    type: 3}
+  createPlaceholderWhenNoPrefab: 0
   armsParent: {fileID: 0}
-  rightForearmPosition: {x: 1.35, y: -3.2, z: -0.15}
+  rightForearmPosition: {x: 1.35, y: -3.2, z: 0.278}
   rightForearmScale: {x: 0.55, y: 3.4, z: 0.55}
   rightHandPosition: {x: 1.35, y: -0.25, z: 0.2}
   leftForearmPosition: {x: -1.35, y: 1.1, z: -0.15}
   leftForearmScale: {x: 0.55, y: 3.1, z: 0.55}
   leftHandPosition: {x: -1.35, y: 2.5, z: 0.2}
-  sleeveColor: {r: 0.23, g: 0.26, b: 0.19, a: 1}
+  sleeveColor: {r: 0, g: 0, b: 0, a: 1}
   gloveColor: {r: 0.18, g: 0.17, b: 0.13, a: 1}
+  rightHandSlot: {fileID: 0}
+  leftHandSlot: {fileID: 0}
+  rightArmPointName: ArmPoint_Right
+  leftArmPointName: ArmPoint_Left
+  rightArmBoneName: R_wrist
+  leftArmBoneName: L_wrist
+  rightHandLocalPosition: {x: 0.307, y: 1.159, z: 0.278}
+  rightHandLocalEuler: {x: -89.783, y: 0, z: -7.031}
+  leftHandLocalPosition: {x: -0.267, y: 1.204, z: 0.921}
+  leftHandLocalEuler: {x: 90, y: 0, z: -30.66}
+  walkBobPosition: {x: 0.012, y: 0.018, z: 0}
+  walkBobFrequency: {x: 0.9, y: 1.8, z: 0}
+  walkBobRotation: {x: 0.6, y: 0.8, z: 1.2}
+  speedForFullBob: 4.5
+  swayAmount: 0.02
+  swayRotationAmount: 2.5
+  swayRecovery: 6
+  swayMaxDistance: 0.05
+  idleBreathPosition: {x: 0.002, y: 0.003, z: 0}
+  idleBreathSpeed: 0.6
+  sprintPosition: {x: 0.02, y: -0.05, z: -0.03}
+  sprintEuler: {x: -12, y: 18, z: 8}
+  sprintTransitionSpeed: 6
+  adsDampening: 0.7
+  lowerWhileReloading: 0
+  reloadPosition: {x: 0, y: -0.06, z: -0.02}
+  reloadEuler: {x: -10, y: 0, z: 0}
+  animationProfile: {fileID: 0}
 --- !u!1 &1129923444180768639
 GameObject:
   m_ObjectHideFlags: 0
@@ -801,13 +832,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4936459486240704031}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.14015947, y: 0.7062381, z: 0.6742428, w: -0.16425554}
+  m_LocalRotation: {x: -0.15278542, y: 0.6963108, z: 0.67542434, w: -0.1887056}
   m_LocalPosition: {x: 0.145, y: -0.503, z: 0.915}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5728008592921097364}
-  m_LocalEulerAnglesHint: {x: -65, y: -95, z: 277}
+  m_LocalEulerAnglesHint: {x: -118, y: 88, z: 95}
 --- !u!1 &5189210514840229793
 GameObject:
   m_ObjectHideFlags: 0
@@ -1060,96 +1091,6 @@ MonoBehaviour:
   playerHealth: {fileID: 0}
   disabled: 0
   useRelativeOffsets: 1
---- !u!1 &7968070148220582542
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1067641479899840568}
-  - component: {fileID: 4076685499551319754}
-  - component: {fileID: 6042662054898300316}
-  m_Layer: 10
-  m_Name: Visual Body
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1067641479899840568
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7968070148220582542}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.9, z: 0}
-  m_LocalScale: {x: 1, y: 0.9, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6263755691784788287}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &4076685499551319754
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7968070148220582542}
-  m_Mesh: {fileID: 10208, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &6042662054898300316
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7968070148220582542}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
 --- !u!1 &8572145988852306520
 GameObject:
   m_ObjectHideFlags: 0

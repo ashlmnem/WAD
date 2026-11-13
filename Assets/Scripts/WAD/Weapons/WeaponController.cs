@@ -37,12 +37,13 @@ namespace WAD.Weapons
 
         [Header("Animation")]
         public Animator animator;
+        public WeaponAnimationProfile animationProfile;
         public string fireHipAnimTrigger = "Fire_Hip";
         public string fireADSAnimTrigger = "Fire_ADS";
-        public string boltCycleAnimTrigger = "BoltCycle";
-        public string inspectAnimTrigger = "Inspect";
         public string emptyReloadAnimTrigger = "Reload_Empty";
         public string partialReloadAnimTrigger = "Reload_Partial";
+        public string boltCycleAnimTrigger = "BoltCycle";
+        public string inspectAnimTrigger = "Inspect";
         public string idleAnimTrigger = "Idle";
         public string isAimingBoolParam = "IsAiming";
 
@@ -51,24 +52,24 @@ namespace WAD.Weapons
 
         [Header("Near-Miss-Erkennung")]
         public float nearMissDetectionRadius = 0.6f;
+        [Header("AI-Hoerbarkeit")]
+        [Min(0f)] public float gunshotNoiseRadius = 150f;
+
+        [Header("Rueckstoss")]
+        [Min(0f)] public float maxRecoilAccumulated = 8f;
 
         [Header("Modell-Korrektur")]
         public Transform modelRoot;
         public Vector3 modelRotationOffsetEuler = Vector3.zero;
 
-        [Header("ADS-Ausrichtung")]
+        [Header("ADS-Ausrichtung (XM607-Style)")]
         [Tooltip("Standard-Zielpunkt (Kimme/Korn), falls keine Optik mit eigenem 'ADS_AimPoint' montiert ist - Kind-Transform am Waffen-Root. WICHTIG: bei JEDER Waffe zuweisen, nicht nur bei Waffen mit Optik!")]
         public Transform defaultIronSightAimPoint;
         public float adsPositionLerpSpeed = 10f;
-        [Tooltip("Richtet beim Zielen die Optik seitlich exakt an der Bildmitte aus: der seitliche Anteil des 'ADS_AimPoint' wird verworfen " +
-                 "und durch die Mittellinie des Optik-Modells ersetzt. Behebt, dass die Waffe seitlich versetzt wirkt, wenn der Aim Point " +
-                 "im Optik-Prefab um Millimeter neben der Mitte sitzt. Nur aktivieren, wenn der Optik-Montagepunkt der Waffe auf ihrer Mittellinie liegt.")]
-        public bool autoCenterOpticLaterally = false;
-        [Tooltip("Dreht die Waffe beim Zielen exakt in Blickrichtung der Kamera (Visierachse = Kamera-Vorwaerts, Oben = Kamera-Oben). " +
-                 "Noetig fuer Waffen OHNE ADS-Animation: Der WeaponSocket traegt eine Huefthaltung (seitlich/nach oben gedreht und um ca. 25 Grad " +
-                 "gerollt), die beim Zielen sonst bestehen bleibt - die Visierung sitzt dann nie genau vor der Kamera. " +
-                 "Waffen MIT Animator (G3, AKM, M27) lassen das aus, dort uebernimmt die Animation das Ausrichten.")]
-        public bool alignRotationOnADS = false;
+        [Tooltip("Richtet beim Zielen die Optik seitlich exakt an der Bildmitte aus: der seitliche Anteil des 'ADS_AimPoint' wird verworfen und durch die Mittellinie des Optik-Modells ersetzt. Behebt, dass die Waffe seitlich versetzt wirkt, wenn der Aim Point im Optik-Prefab um Millimeter neben der Mitte sitzt. Nur aktivieren, wenn der Optik-Montagepunkt der Waffe auf ihrer Mittellinie liegt.")]
+        public bool autoCenterOpticLaterally = true;
+        [Tooltip("Dreht die Waffe beim Zielen exakt in Blickrichtung der Kamera (Visierachse = Kamera-Vorwaerts, Oben = Kamera-Oben). Mesh-Frame der Waffen: +Y vor, +Z oben.")]
+        public bool alignRotationOnADS = true;
         [Tooltip("Achse des Modells (im Modell-Root-Raum), die beim Zielen nach VORN zeigen soll (= Visierlinie/Laufrichtung). Mesh-Frame der Waffen: +Y.")]
         public Vector3 sightForwardAxis = Vector3.up;
         [Tooltip("Achse des Modells (im Modell-Root-Raum), die beim Zielen nach OBEN zeigen soll. Mesh-Frame der Waffen: +Z.")]
@@ -84,10 +85,16 @@ namespace WAD.Weapons
         private bool isReloading;
         private bool isChamberedRoundReady = true;
         private float currentRecoilAccumulated;
+        private float proceduralTime;
+        private Vector3 appliedProceduralPosition;
+        private Quaternion appliedProceduralRotation = Quaternion.identity;
         private bool loggedMissingWeaponData;
         public bool isEquipped { get; private set; }
         public bool IsAiming { get; private set; }
         public bool IsReloadingPublic => isReloading;
+        public WeaponAnimationProfile ActiveAnimationProfile => animationProfile != null
+            ? animationProfile
+            : weaponData != null ? weaponData.animationProfile : null;
 
         /// <summary> Gesamtanzahl Patronen in allen Reserve-Magazinen (fuer HUD/Inspect). </summary>
         public int ReserveRoundsTotal
@@ -220,6 +227,7 @@ namespace WAD.Weapons
 
         private void Update()
         {
+            if (weaponData != null) RecoverRecoil();
             if (!isEquipped) return;
 
             if (weaponData == null)
@@ -237,7 +245,6 @@ namespace WAD.Weapons
             HandleReloadInput();
             HandleBoltActionInput();
             HandleInspectInput();
-            RecoverRecoil();
         }
 
         /// <summary>
@@ -250,7 +257,51 @@ namespace WAD.Weapons
         private void LateUpdate()
         {
             if (!isEquipped || weaponData == null) return;
+
+            transform.localPosition -= appliedProceduralPosition;
+            transform.localRotation *= Quaternion.Inverse(appliedProceduralRotation);
             HandleADSPositioning();
+            ApplyProceduralAnimation();
+        }
+
+        private void ApplyProceduralAnimation()
+        {
+            var profile = ActiveAnimationProfile;
+            if (profile == null)
+            {
+                appliedProceduralPosition = Vector3.zero;
+                appliedProceduralRotation = Quaternion.identity;
+                return;
+            }
+
+            proceduralTime += Time.deltaTime;
+            float speed = movementController != null ? movementController.CurrentSpeed : 0f;
+            float movement = Mathf.Clamp01(speed / 4.5f);
+            float phase = proceduralTime * Mathf.PI * 2f * profile.weaponMotionFrequency;
+            float adsFactor = IsAiming ? 1f - profile.adsMotionDampening : 1f;
+
+            Vector3 idlePosition = new Vector3(
+                Mathf.Sin(phase * 0.5f) * profile.weaponIdlePosition.x,
+                Mathf.Sin(phase) * profile.weaponIdlePosition.y,
+                Mathf.Cos(phase * 0.5f) * profile.weaponIdlePosition.z);
+            Vector3 movementPosition = new Vector3(
+                Mathf.Sin(phase) * profile.weaponMovementPosition.x,
+                Mathf.Abs(Mathf.Sin(phase)) * profile.weaponMovementPosition.y,
+                Mathf.Cos(phase) * profile.weaponMovementPosition.z) * movement;
+
+            Vector3 idleRotation = new Vector3(
+                Mathf.Sin(phase * 0.5f) * profile.weaponIdleRotation.x,
+                Mathf.Sin(phase * 0.35f) * profile.weaponIdleRotation.y,
+                Mathf.Cos(phase * 0.5f) * profile.weaponIdleRotation.z);
+            Vector3 movementRotation = new Vector3(
+                Mathf.Sin(phase) * profile.weaponMovementRotation.x,
+                0f,
+                Mathf.Cos(phase) * profile.weaponMovementRotation.z) * movement;
+
+            appliedProceduralPosition = (idlePosition + movementPosition) * adsFactor;
+            appliedProceduralRotation = Quaternion.Euler((idleRotation + movementRotation) * adsFactor);
+            transform.localPosition += appliedProceduralPosition;
+            transform.localRotation *= appliedProceduralRotation;
         }
 
         private bool IsBlindFiring => playerLean != null && playerLean.IsLeaning && !IsAiming;
@@ -404,6 +455,26 @@ namespace WAD.Weapons
             }
         }
 
+        private bool TryPlayRandomAnimation(System.Collections.Generic.List<AnimationClip> clips)
+        {
+            if (animator == null || clips == null || clips.Count == 0) return false;
+
+            int firstIndex = Random.Range(0, clips.Count);
+            for (int i = 0; i < clips.Count; i++)
+            {
+                AnimationClip clip = clips[(firstIndex + i) % clips.Count];
+                if (clip == null) continue;
+
+                int stateHash = Animator.StringToHash(clip.name);
+                if (!animator.HasState(0, stateHash)) continue;
+
+                animator.Play(stateHash, 0, 0f);
+                return true;
+            }
+
+            return false;
+        }
+
         public void TryFire()
         {
             if (isReloading) return;
@@ -431,6 +502,8 @@ namespace WAD.Weapons
             NotifyAmmoChanged();
             OnFired?.Invoke();
             GlobalOnFired?.Invoke();
+            EnemyNoiseStimulus.Emit(muzzlePoint != null ? muzzlePoint.position : transform.position,
+                gunshotNoiseRadius, transform.root);
 
             if (weaponData.fireMode == FireMode.BoltAction)
             {
@@ -463,10 +536,11 @@ namespace WAD.Weapons
             loadedMagazine.TryConsumeRound();
             lastFireTime = Time.time;
             FireRaycastAt(origin, targetPoint, spreadMultiplier);
-            ApplyRecoil();
+            ApplyRecoil(0.2f);
             NotifyAmmoChanged();
             OnFired?.Invoke();
             GlobalOnFired?.Invoke();
+            EnemyNoiseStimulus.Emit(origin, gunshotNoiseRadius, transform.root);
 
             if (weaponData.fireMode == FireMode.BoltAction)
             {
@@ -481,7 +555,17 @@ namespace WAD.Weapons
         {
             if (playerCamera == null) return;
 
-            FireRaycastFrom(playerCamera.transform.position, playerCamera.transform.forward, false, 1f);
+            Vector3 direction = playerCamera.transform.forward;
+            if (!IsAiming && attachments != null)
+            {
+                var laser = attachments.GetActiveLaser();
+                if (laser != null && laser.TryGetHipfireAimPoint(playerCamera, out Vector3 laserAimPoint))
+                {
+                    direction = (laserAimPoint - playerCamera.transform.position).normalized;
+                }
+            }
+
+            FireRaycastFrom(playerCamera.transform.position, direction, false, 1f);
         }
 
         private void FireRaycastAt(Vector3 origin, Vector3 targetPoint, float spreadMultiplier)
@@ -494,7 +578,7 @@ namespace WAD.Weapons
             if (loadedMagazine == null || loadedMagazine.ammoType == null) return;
 
             float spread = !ignoreShooter && IsAiming ? weaponData.adsSpreadDegrees : weaponData.baseSpreadDegrees;
-            spread += currentRecoilAccumulated * 0.3f;
+            spread += currentRecoilAccumulated * (ignoreShooter ? 0.03f : 0.3f);
 
             float attachmentSpreadMult = attachments != null ? attachments.GetSpreadMultiplier() : 1f;
             spread *= attachmentSpreadMult * (ignoreShooter ? Mathf.Max(0f, spreadMultiplier) : 1f);
@@ -565,10 +649,12 @@ namespace WAD.Weapons
                 casingEjector.EjectCasing(loadedMagazine.ammoType.casingPrefab);
             }
 
-            string fireTrigger = IsAiming ? fireADSAnimTrigger : fireHipAnimTrigger;
-            if (animator != null && !string.IsNullOrEmpty(fireTrigger))
+            var profile = ActiveAnimationProfile;
+            bool animationPlayed = profile != null && TryPlayRandomAnimation(profile.firingAnimations);
+            if (!animationPlayed && animator != null)
             {
-                animator.SetTrigger(fireTrigger);
+                string trigger = IsAiming ? fireADSAnimTrigger : fireHipAnimTrigger;
+                if (!string.IsNullOrEmpty(trigger)) animator.SetTrigger(trigger);
             }
         }
 
@@ -629,10 +715,11 @@ namespace WAD.Weapons
             return spreadRotation * forward;
         }
 
-        private void ApplyRecoil()
+        private void ApplyRecoil(float recoilScale = 1f)
         {
             float mult = attachments != null ? attachments.GetRecoilMultiplier() : 1f;
-            currentRecoilAccumulated += weaponData.recoilPerShot * mult;
+            currentRecoilAccumulated = Mathf.Min(maxRecoilAccumulated,
+                currentRecoilAccumulated + weaponData.recoilPerShot * mult * Mathf.Max(0f, recoilScale));
         }
 
         private void RecoverRecoil()
@@ -646,10 +733,7 @@ namespace WAD.Weapons
             if (isReloading || weaponData == null) return;
 
             Magazine bestReserve = FindBestReserveMagazine();
-            if (bestReserve == null) return;
-
-            // Kein Tausch gegen ein Magazin, das nicht voller ist als das eingelegte
-            if (loadedMagazine != null && bestReserve.currentRounds <= loadedMagazine.currentRounds) return;
+            if (bestReserve == null || bestReserve == loadedMagazine) return;
 
             StartCoroutine(ReloadRoutine(bestReserve));
         }
@@ -659,7 +743,7 @@ namespace WAD.Weapons
             Magazine best = null;
             foreach (var mag in reserveMagazines)
             {
-                if (mag.IsEmpty) continue;
+                if (mag == null || mag.IsEmpty) continue;
                 if (weaponData != null && !weaponData.AcceptsMagazine(mag.magazineType)) continue;
                 if (best == null || mag.currentRounds > best.currentRounds) best = mag;
             }
@@ -670,17 +754,18 @@ namespace WAD.Weapons
         {
             isReloading = true;
 
-            bool wasEmpty = loadedMagazine == null || loadedMagazine.IsEmpty;
-
             if (audioSource != null && weaponData.reloadSound != null)
             {
                 audioSource.PlayOneShot(weaponData.reloadSound);
             }
 
-            string reloadTrigger = wasEmpty ? emptyReloadAnimTrigger : partialReloadAnimTrigger;
-            if (animator != null && !string.IsNullOrEmpty(reloadTrigger))
+            bool wasEmpty = loadedMagazine == null || loadedMagazine.IsEmpty;
+            var profile = ActiveAnimationProfile;
+            bool animationPlayed = profile != null && TryPlayRandomAnimation(profile.reloadAnimations);
+            if (!animationPlayed && animator != null)
             {
-                animator.SetTrigger(reloadTrigger);
+                string trigger = wasEmpty ? emptyReloadAnimTrigger : partialReloadAnimTrigger;
+                if (!string.IsNullOrEmpty(trigger)) animator.SetTrigger(trigger);
             }
 
             // Dauer an die echte Nachladezeit koppeln (inkl. Magazin-Multiplikator,

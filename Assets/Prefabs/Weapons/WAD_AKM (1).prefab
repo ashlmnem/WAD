@@ -481,12 +481,13 @@ MonoBehaviour:
     m_Bits: 4294967295
   audioSource: {fileID: 5995131431920270294}
   animator: {fileID: 3698754046330137843}
+  animationProfile: {fileID: 0}
   fireHipAnimTrigger: Fire_Hip
   fireADSAnimTrigger: Fire_ADS
-  boltCycleAnimTrigger: BoltCycle
-  inspectAnimTrigger: Inspect
   emptyReloadAnimTrigger: Reload_Empty
   partialReloadAnimTrigger: Reload_Partial
+  boltCycleAnimTrigger: BoltCycle
+  inspectAnimTrigger: Inspect
   idleAnimTrigger: Idle
   isAimingBoolParam: IsAiming
   blindFireSpreadMultiplier: 1
@@ -495,7 +496,7 @@ MonoBehaviour:
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
   defaultIronSightAimPoint: {fileID: 8177152251706099495}
   adsPositionLerpSpeed: 10
-  autoCenterOpticLaterally: 0
+  autoCenterOpticLaterally: 1
   alignRotationOnADS: 1
   sightForwardAxis: {x: 0, y: 1, z: 0}
   sightUpAxis: {x: 0, y: 0, z: 1}

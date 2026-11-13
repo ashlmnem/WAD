@@ -1040,10 +1040,8 @@ MonoBehaviour:
   turnInButton: {fileID: 6653745869472957962}
   acceptButton: {fileID: 6653745869472957962}
   turnInButtonLabel: {fileID: 4218990235506576240}
-  inventory: {fileID: 6732290555380524132, guid: 56ac9213b8a8e9d4cbb798ce44b7ab59,
-    type: 3}
-  weaponHolder: {fileID: 1556950061433652186, guid: 56ac9213b8a8e9d4cbb798ce44b7ab59,
-    type: 3}
+  inventory: {fileID: 0}
+  weaponHolder: {fileID: 0}
   autoSelectFirst: 0
   manageCursor: 1
   blockPlayerInput: 1

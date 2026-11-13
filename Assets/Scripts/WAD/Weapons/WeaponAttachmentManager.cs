@@ -71,6 +71,13 @@ namespace WAD.Weapons.Attachments
 
                 GameObject visual = Instantiate(attachment.visualPrefab, pos, rot, parent);
                 spawnedVisuals[railId] = visual;
+
+                if (attachment.category == AttachmentCategory.Laser)
+                {
+                    var laser = visual.GetComponent<LaserAttachmentController>();
+                    if (laser == null) laser = visual.AddComponent<LaserAttachmentController>();
+                    laser.Configure(attachment, GetComponent<WeaponController>(), visual.transform);
+                }
             }
             else
             {
@@ -121,6 +128,17 @@ namespace WAD.Weapons.Attachments
             foreach (var a in equippedByRail.Values)
             {
                 if (a.category == AttachmentCategory.Magazine && a.magazineTypeOverride != null) return a.magazineTypeOverride;
+            }
+            return null;
+        }
+
+        public LaserAttachmentController GetActiveLaser()
+        {
+            foreach (GameObject visual in spawnedVisuals.Values)
+            {
+                if (visual == null || !visual.activeInHierarchy) continue;
+                var laser = visual.GetComponentInChildren<LaserAttachmentController>(true);
+                if (laser != null) return laser;
             }
             return null;
         }

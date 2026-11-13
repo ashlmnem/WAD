@@ -319,6 +319,10 @@ MonoBehaviour:
   modelRotationOffsetEuler: {x: 0, y: 0, z: 0}
   defaultIronSightAimPoint: {fileID: 2118089291417910900}
   adsPositionLerpSpeed: 10
+  autoCenterOpticLaterally: 1
+  alignRotationOnADS: 1
+  sightForwardAxis: {x: 0, y: 1, z: 0}
+  sightUpAxis: {x: 0, y: 0, z: 1}
 --- !u!114 &1648959767668972243
 MonoBehaviour:
   m_ObjectHideFlags: 0

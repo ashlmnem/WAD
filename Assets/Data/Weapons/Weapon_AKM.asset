@@ -25,7 +25,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 495dd91e58dcf084fb79cec0187e8ef2, type: 2}
   reloadTimeSeconds: 2.2
   requiresChamberAfterReload: 0
-  baseSpreadDegrees: 0.1
+  baseSpreadDegrees: 0.08
   adsSpreadDegrees: 0
   recoilPerShot: 2
   horizontalRecoilPerShot: 0.6
@@ -62,3 +62,4 @@ MonoBehaviour:
   fireSound: {fileID: 8300000, guid: b55c229f3ddc620448f4a41bb4552c12, type: 3}
   dryFireSound: {fileID: 8300000, guid: 614ee563efc665741bd3274fda6bd181, type: 3}
   reloadSound: {fileID: 8300000, guid: 2ac75495b5021e241b8f215cb15d0f2e, type: 3}
+  animationProfile: {fileID: 11400000, guid: e4b7f2c0a4314e6eb87d3f51c6a00129, type: 2}

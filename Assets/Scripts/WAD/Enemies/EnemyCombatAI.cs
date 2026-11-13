@@ -35,6 +35,12 @@ namespace WAD.Enemies
         public float suppressiveFireCooldown = 2f;
         [Min(1f)] public float suppressiveSpreadMultiplier = 3f;
 
+        [Header("Corner Slicing")]
+        public bool useCornerSlicing = true;
+        [Min(0.1f)] public float cornerSliceDistance = 1.1f;
+        [Min(0.1f)] public float cornerSliceInterval = 0.55f;
+        [Min(0.1f)] public float cornerSliceNavSampleRadius = 1.5f;
+
         private EnemyController enemy;
         private NavMeshAgent agent;
 
@@ -46,11 +52,15 @@ namespace WAD.Enemies
         private float timeWithoutSight;
         private float suppressiveFireTimer;
         private float lastSuppressiveShotTime;
+        private float nextCornerSliceTime;
+        private NavMeshPath cornerPath;
+        private readonly Vector3[] cornerCandidates = new Vector3[2];
 
         private void Awake()
         {
             enemy = GetComponent<EnemyController>();
             agent = GetComponent<NavMeshAgent>();
+            cornerPath = new NavMeshPath();
         }
 
         private void OnEnable()
@@ -119,7 +129,21 @@ namespace WAD.Enemies
         {
             if (hasSight)
             {
-                FaceAndFire();
+                float distance = Vector3.Distance(transform.position, enemy.PlayerTransform.position);
+                if (distance > enemy.attackRange)
+                {
+                    SetDestinationSafe(enemy.PlayerTransform.position);
+                    FaceTarget(enemy.PlayerTransform.position);
+                }
+                else
+                {
+                    FaceAndFire();
+                }
+            }
+            else if (Time.time >= nextCornerSliceTime)
+            {
+                nextCornerSliceTime = Time.time + cornerSliceInterval;
+                if (!TrySliceCorner()) SetDestinationSafe(lastKnownPlayerPosition);
             }
 
             if (Time.time >= nextCoverSwitchTime)
@@ -215,11 +239,53 @@ namespace WAD.Enemies
 
             transform.LookAt(new Vector3(lastKnownPlayerPosition.x, transform.position.y, lastKnownPlayerPosition.z));
 
+            if (Time.time >= nextCornerSliceTime)
+            {
+                nextCornerSliceTime = Time.time + cornerSliceInterval;
+                if (!TrySliceCorner()) SetDestinationSafe(lastKnownPlayerPosition);
+            }
+
             if (Time.time - lastSuppressiveShotTime >= suppressiveFireCooldown)
             {
                 lastSuppressiveShotTime = Time.time;
                 enemy.ExecuteSuppressiveFire(lastKnownPlayerPosition, suppressiveSpreadMultiplier);
             }
+        }
+
+        private bool TrySliceCorner()
+        {
+            if (!useCornerSlicing || !agent.isActiveAndEnabled || !agent.isOnNavMesh) return false;
+
+            Vector3 towardTarget = lastKnownPlayerPosition - transform.position;
+            towardTarget.y = 0f;
+            if (towardTarget.sqrMagnitude < 0.01f) return false;
+            towardTarget.Normalize();
+            Vector3 side = Vector3.Cross(Vector3.up, towardTarget).normalized;
+            cornerCandidates[0] = transform.position + side * cornerSliceDistance + towardTarget * 0.35f;
+            cornerCandidates[1] = transform.position - side * cornerSliceDistance + towardTarget * 0.35f;
+
+            Vector3 bestPosition = Vector3.zero;
+            float bestScore = float.PositiveInfinity;
+            bool found = false;
+
+            foreach (Vector3 candidate in cornerCandidates)
+            {
+                if (!NavMesh.SamplePosition(candidate, out NavMeshHit navHit, cornerSliceNavSampleRadius, NavMesh.AllAreas)) continue;
+                if (!agent.CalculatePath(navHit.position, cornerPath) || cornerPath.status != NavMeshPathStatus.PathComplete) continue;
+
+                Vector3 eye = navHit.position + Vector3.up * 1.5f;
+                Vector3 target = lastKnownPlayerPosition + Vector3.up * 1.4f;
+                bool visible = !Physics.Linecast(eye, target, enemy.obstructionLayers, QueryTriggerInteraction.Ignore);
+                float score = Vector3.Distance(transform.position, navHit.position) +
+                    (visible ? 0f : cornerSliceDistance * 2f);
+
+                if (score >= bestScore) continue;
+                bestScore = score;
+                bestPosition = navHit.position;
+                found = true;
+            }
+
+            return found && SetDestinationSafe(bestPosition);
         }
 
         private void FaceAndFire()
@@ -232,8 +298,15 @@ namespace WAD.Enemies
             // Reichweite beachten - ExecuteAttack() selbst prueft keine Distanz.
             if (Vector3.Distance(transform.position, enemy.PlayerTransform.position) > enemy.attackRange) return;
 
-            transform.LookAt(new Vector3(enemy.PlayerTransform.position.x, transform.position.y, enemy.PlayerTransform.position.z));
+            FaceTarget(enemy.PlayerTransform.position);
             enemy.ExecuteAttack();
+        }
+
+        private void FaceTarget(Vector3 targetPosition)
+        {
+            Vector3 direction = targetPosition - transform.position;
+            direction.y = 0f;
+            if (direction.sqrMagnitude > 0.001f) transform.rotation = Quaternion.LookRotation(direction);
         }
 
         /// <summary>

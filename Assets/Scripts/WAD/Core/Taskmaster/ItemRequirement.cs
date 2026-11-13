@@ -1,5 +1,6 @@
 using UnityEngine;
 using WAD.Inventory;
+using WAD.Weapons;
 
 namespace WAD.Core
 {
@@ -10,10 +11,11 @@ namespace WAD.Core
     [System.Serializable]
     public class ItemRequirement
     {
-        [Tooltip("EntitySO, AmmoTypeSO oder ItemSO - alle implementieren IInventoryItem")]
+        [Tooltip("Inventar-Item (EntitySO/AmmoTypeSO/ItemSO) oder MagazineTypeSO")]
         public Object itemAsset;
         public int quantity = 1;
 
         public IInventoryItem Item => itemAsset as IInventoryItem;
+        public MagazineTypeSO MagazineType => itemAsset as MagazineTypeSO;
     }
 }

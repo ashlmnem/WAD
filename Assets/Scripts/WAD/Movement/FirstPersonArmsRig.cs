@@ -49,6 +49,12 @@ namespace WAD.Player
         [Tooltip("Transform im Waffen-Prefab, an dem die linke Hand sitzt")]
         public Transform leftHandSlot;
 
+        [Header("Arm-Punkte an der Waffe")]
+        public string rightArmPointName = "ArmPoint_Right";
+        public string leftArmPointName = "ArmPoint_Left";
+        public string rightArmBoneName = "R_armModel";
+        public string leftArmBoneName = "L_armModel";
+
         [Header("Griff-Feinjustierung (Weg B)")]
         public Vector3 rightHandLocalPosition = Vector3.zero;
         public Vector3 rightHandLocalEuler = Vector3.zero;
@@ -99,12 +105,24 @@ namespace WAD.Player
         private WeaponController activeWeapon;
         private GameObject armsInstance;
         private Transform armsRoot;
+        private Transform rightArmBone;
+        private Transform leftArmBone;
+        private Transform rightArmPoint;
+        private Transform leftArmPoint;
+        private Vector3 rightArmPointBasePosition;
+        private Vector3 leftArmPointBasePosition;
+        private Quaternion rightArmPointBaseRotation;
+        private Quaternion leftArmPointBaseRotation;
 
         private Vector2 swayOffset;
         private Vector3 currentSprintBlend;
         private Vector3 bobPhase;
         private float phase;
         private MaterialPropertyBlock placeholderProperties;
+        [Header("Prozedurale Animation")]
+        public WeaponAnimationProfile animationProfile;
+        private float proceduralTime;
+        private Vector3 proceduralOffset;
 
         private void Awake()
         {
@@ -170,10 +188,30 @@ namespace WAD.Player
                 if (armsInstance != null) AttachArmsToWeapon();
             }
 
-            if (armsRoot == null && rightHandSlot == null && leftHandSlot == null) return;
+            if (armsRoot == null && rightHandSlot == null && leftHandSlot == null &&
+                rightArmPoint == null && leftArmPoint == null) return;
 
-            UpdateSway();
+            UpdateProceduralArms();
             UpdatePose();
+        }
+
+        private void UpdateProceduralArms()
+        {
+            proceduralOffset = Vector3.zero;
+            WeaponAnimationProfile profile = activeWeapon != null && activeWeapon.ActiveAnimationProfile != null
+                ? activeWeapon.ActiveAnimationProfile
+                : animationProfile;
+            if (profile == null) return;
+
+            proceduralTime += Time.deltaTime;
+
+            float bobPhase = Mathf.Sin(proceduralTime * Mathf.PI * 2f * Mathf.Max(0.01f, profile.idleFrequency));
+            float swayPhase = Mathf.Sin(proceduralTime * Mathf.PI * 2f);
+            float sway = profile.swayCurve.Evaluate(Mathf.Abs(swayPhase)) * Mathf.Sign(swayPhase) * profile.swayAmount;
+            float bob = profile.bobCurve.Evaluate(Mathf.Abs(bobPhase)) * Mathf.Sign(bobPhase) * profile.bobAmount;
+            float idle = Mathf.Sin(proceduralTime * profile.idleFrequency) * profile.idleAmplitude;
+
+            proceduralOffset = new Vector3(sway, bob + idle, 0f);
         }
 
         /// <summary> Heftet die separaten Arme an die aktuell gehaltene Waffe. </summary>
@@ -181,10 +219,78 @@ namespace WAD.Player
         {
             if (armsRoot == null || activeWeapon == null) return;
 
-            // Die Arme folgen der Waffe, damit alles zusammen bewegt wird.
+            if (rightArmBone != null) rightArmBone.SetParent(armsRoot, true);
+            if (leftArmBone != null) leftArmBone.SetParent(armsRoot, true);
+
             armsRoot.SetParent(activeWeapon.transform, worldPositionStays: false);
             armsRoot.localPosition = Vector3.zero;
             armsRoot.localRotation = Quaternion.identity;
+
+            rightArmBone = FindDescendant(armsRoot, rightArmBoneName);
+            leftArmBone = FindDescendant(armsRoot, leftArmBoneName);
+
+            if (rightArmBone != null)
+            {
+                rightArmPoint = ResolveArmPoint(rightArmPointName, rightArmBone, rightHandLocalPosition, rightHandLocalEuler);
+                AttachBoneToArmPoint(rightArmBone, rightArmPoint);
+                rightArmPointBasePosition = rightArmPoint.localPosition;
+                rightArmPointBaseRotation = rightArmPoint.localRotation;
+            }
+
+            if (leftArmBone != null)
+            {
+                leftArmPoint = ResolveArmPoint(leftArmPointName, leftArmBone, leftHandLocalPosition, leftHandLocalEuler);
+                AttachBoneToArmPoint(leftArmBone, leftArmPoint);
+                leftArmPointBasePosition = leftArmPoint.localPosition;
+                leftArmPointBaseRotation = leftArmPoint.localRotation;
+            }
+        }
+
+        private Transform ResolveArmPoint(string pointName, Transform armBone, Vector3 fallbackPosition, Vector3 fallbackEuler)
+        {
+            Transform point = FindDescendant(activeWeapon.transform, pointName);
+            if (point != null) return point;
+
+            var pointObject = new GameObject(string.IsNullOrEmpty(pointName) ? "ArmPoint" : pointName);
+            point = pointObject.transform;
+            point.SetParent(activeWeapon.transform, false);
+            point.position = armBone.position;
+            point.rotation = armBone.rotation;
+            point.localPosition = activeWeapon.transform.InverseTransformPoint(armBone.position);
+            point.localRotation = Quaternion.Inverse(activeWeapon.transform.rotation) * armBone.rotation;
+
+            if (armBone == null)
+            {
+                point.localPosition = fallbackPosition;
+                point.localRotation = Quaternion.Euler(fallbackEuler);
+            }
+
+            return point;
+        }
+
+        private static void AttachBoneToArmPoint(Transform armBone, Transform armPoint)
+        {
+            if (armBone == null || armPoint == null) return;
+
+            Vector3 localScale = armBone.localScale;
+            armBone.SetParent(armPoint, worldPositionStays: false);
+            armBone.localPosition = Vector3.zero;
+            armBone.localRotation = Quaternion.identity;
+            armBone.localScale = localScale;
+        }
+
+        private static Transform FindDescendant(Transform root, string targetName)
+        {
+            if (root == null || string.IsNullOrEmpty(targetName)) return null;
+            if (root.name == targetName) return root;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform found = FindDescendant(root.GetChild(i), targetName);
+                if (found != null) return found;
+            }
+
+            return null;
         }
 
         private void UpdateSway()
@@ -275,20 +381,32 @@ namespace WAD.Player
             // Weg A: Slots im Waffen-Prefab werden relativ verschoben
             if (rightHandSlot != null)
             {
-                rightHandSlot.localPosition = rightHandLocalPosition + positionOffset;
+                rightHandSlot.localPosition = rightHandLocalPosition + positionOffset + proceduralOffset;
                 rightHandSlot.localRotation = Quaternion.Euler(rightHandLocalEuler) * rot;
             }
 
             if (leftHandSlot != null)
             {
-                leftHandSlot.localPosition = leftHandLocalPosition + positionOffset;
+                leftHandSlot.localPosition = leftHandLocalPosition + positionOffset + proceduralOffset;
                 leftHandSlot.localRotation = Quaternion.Euler(leftHandLocalEuler) * rot;
             }
 
-            // Weg B: separates Arm-Prefab
-            if (armsRoot != null && rightHandSlot == null)
+            if (rightArmBone != null && rightArmPoint != null)
             {
-                armsRoot.localPosition = positionOffset;
+                rightArmPoint.localPosition = rightArmPointBasePosition + positionOffset + proceduralOffset;
+                rightArmPoint.localRotation = rightArmPointBaseRotation * rot;
+            }
+
+            if (leftArmBone != null && leftArmPoint != null)
+            {
+                leftArmPoint.localPosition = leftArmPointBasePosition + positionOffset + proceduralOffset;
+                leftArmPoint.localRotation = leftArmPointBaseRotation * rot;
+            }
+
+            // Weg B: separates Arm-Prefab
+            if (armsRoot != null && rightHandSlot == null && rightArmBone == null && leftArmBone == null)
+            {
+                armsRoot.localPosition = positionOffset + proceduralOffset;
                 armsRoot.localRotation = rot;
             }
         }

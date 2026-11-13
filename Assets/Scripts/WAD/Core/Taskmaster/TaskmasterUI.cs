@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using WAD.Inventory;
+using WAD.Player;
 using WAD.Weapons;
 
 namespace WAD.Taskmaster
@@ -63,6 +64,18 @@ namespace WAD.Taskmaster
         private TaskmasterQuestSO currentQuest;
         private readonly List<GameObject> spawnedEntries = new List<GameObject>();
         private readonly List<TaskmasterQuestSO> displayedQuests = new List<TaskmasterQuestSO>();
+        private TarkovMovementController playerMovement;
+        private FirstPersonCameraLook playerLook;
+        private PlayerInteraction playerInteraction;
+        private PlayerWeaponHolder playerHolder;
+        private WeaponController activeWeaponBeforeDialog;
+        private bool movementWasEnabled;
+        private bool lookWasEnabled;
+        private bool interactionWasEnabled;
+        private bool holderWasEnabled;
+        private bool weaponWasEquipped;
+        private CursorLockMode previousCursorLock;
+        private bool previousCursorVisible;
 
         public bool IsOpen { get; private set; }
 
@@ -80,10 +93,12 @@ namespace WAD.Taskmaster
             if (turnInButton != null)
             {
                 turnInButton.onClick.RemoveAllListeners();
-                turnInButton.onClick.AddListener(HandleTurnInClicked);
+                turnInButton.onClick.AddListener(ReferenceEquals(turnInButton, acceptButton)
+                    ? HandlePrimaryActionClicked
+                    : HandleTurnInClicked);
             }
 
-            if (acceptButton != null)
+            if (acceptButton != null && !ReferenceEquals(acceptButton, turnInButton))
             {
                 acceptButton.onClick.RemoveAllListeners();
                 acceptButton.onClick.AddListener(HandleAcceptClicked);
@@ -140,15 +155,74 @@ namespace WAD.Taskmaster
 
         private void SetOpen(bool open)
         {
+            if (open == IsOpen)
+            {
+                if (panelRoot != null && panelRoot.activeSelf != open) panelRoot.SetActive(open);
+                return;
+            }
+
+            if (open) BlockPlayerInput();
+            else RestorePlayerInput();
+
             IsOpen = open;
 
             if (panelRoot != null) panelRoot.SetActive(open);
 
             if (manageCursor)
             {
-                Cursor.lockState = open ? CursorLockMode.None : CursorLockMode.Locked;
-                Cursor.visible = open;
+                if (open)
+                {
+                    previousCursorLock = Cursor.lockState;
+                    previousCursorVisible = Cursor.visible;
+                    Cursor.lockState = CursorLockMode.None;
+                    Cursor.visible = true;
+                }
+                else
+                {
+                    Cursor.lockState = previousCursorLock;
+                    Cursor.visible = previousCursorVisible;
+                }
             }
+        }
+
+        private void BlockPlayerInput()
+        {
+            if (!blockPlayerInput) return;
+
+            playerMovement = FindFirstObjectByType<TarkovMovementController>();
+            playerLook = FindFirstObjectByType<FirstPersonCameraLook>();
+            playerInteraction = FindFirstObjectByType<PlayerInteraction>();
+            playerHolder = weaponHolder != null ? weaponHolder : FindFirstObjectByType<PlayerWeaponHolder>();
+
+            movementWasEnabled = playerMovement != null && playerMovement.enabled;
+            lookWasEnabled = playerLook != null && playerLook.enabled;
+            interactionWasEnabled = playerInteraction != null && playerInteraction.enabled;
+            holderWasEnabled = playerHolder != null && playerHolder.enabled;
+            activeWeaponBeforeDialog = playerHolder != null ? playerHolder.GetActiveWeapon() : null;
+            weaponWasEquipped = activeWeaponBeforeDialog != null && activeWeaponBeforeDialog.isEquipped;
+
+            if (playerMovement != null) playerMovement.enabled = false;
+            if (playerLook != null) playerLook.enabled = false;
+            if (playerInteraction != null) playerInteraction.enabled = false;
+            if (playerHolder != null) playerHolder.enabled = false;
+            if (activeWeaponBeforeDialog != null) activeWeaponBeforeDialog.SetEquipped(false);
+        }
+
+        private void RestorePlayerInput()
+        {
+            if (!blockPlayerInput) return;
+
+            if (playerMovement != null) playerMovement.enabled = movementWasEnabled;
+            if (playerLook != null) playerLook.enabled = lookWasEnabled;
+            if (playerInteraction != null) playerInteraction.enabled = interactionWasEnabled;
+            if (playerHolder != null) playerHolder.enabled = holderWasEnabled;
+            if (activeWeaponBeforeDialog != null) activeWeaponBeforeDialog.SetEquipped(weaponWasEquipped);
+
+            playerMovement = null;
+            playerLook = null;
+            playerInteraction = null;
+            playerHolder = null;
+            activeWeaponBeforeDialog = null;
         }
 
         // ------------------------------------------------------------------
@@ -292,30 +366,55 @@ namespace WAD.Taskmaster
                     : "Voraussetzungen nicht erfuellt.";
             }
 
-            // Taskmaster-Zeile
+            string dialogueLine;
+            if (!unlocked) dialogueLine = "Dafuer bist du noch nicht bereit.";
+            else if (completed) dialogueLine = currentQuest.completionLine;
+            else if (canTurnIn) dialogueLine = string.IsNullOrEmpty(currentQuest.completionLine)
+                ? "Gut gemacht. Gib es her."
+                : currentQuest.completionLine;
+            else if (status == QuestStatus.Active) dialogueLine = string.IsNullOrEmpty(currentQuest.inProgressLine)
+                ? "Mach weiter."
+                : currentQuest.inProgressLine;
+            else dialogueLine = string.IsNullOrEmpty(currentQuest.offerLine)
+                ? "Ich habe Arbeit fuer dich."
+                : currentQuest.offerLine;
+
             if (dialogueText != null)
             {
-                if (!unlocked) dialogueText.text = "Dafuer bist du noch nicht bereit.";
-                else if (completed) dialogueText.text = currentQuest.completionLine;
-                else if (canTurnIn) dialogueText.text = string.IsNullOrEmpty(currentQuest.completionLine)
-                    ? "Gut gemacht. Gib es her."
-                    : currentQuest.completionLine;
-                else dialogueText.text = string.IsNullOrEmpty(currentQuest.offerLine)
-                    ? "Ich habe Arbeit fuer dich."
-                    : currentQuest.offerLine;
+                dialogueText.text = dialogueLine;
+            }
+            else if (descriptionText != null && !string.IsNullOrEmpty(dialogueLine))
+            {
+                string description = unlocked ? currentQuest.description : "Voraussetzungen nicht erfuellt.";
+                descriptionText.text = $"{description}\n\n{dialogueLine}";
             }
 
             // Anforderungen
             if (requirementsText != null)
             {
                 string reqs = "";
-                foreach (var req in currentQuest.requirements)
-                {
-                    var item = req.Item;
-                    if (item == null) continue;
+                PlayerWeaponHolder holder = weaponHolder != null
+                    ? weaponHolder
+                    : inventory != null && inventory.weaponHolder != null
+                        ? inventory.weaponHolder
+                        : FindFirstObjectByType<PlayerWeaponHolder>();
 
-                    int have = inventory != null ? inventory.GetQuantity(item.ItemId) : 0;
-                    reqs += $"{(have >= req.quantity ? "[x]" : "[ ]")} {item.DisplayName}: {have}/{req.quantity}\n";
+                if (currentQuest.requirements != null)
+                {
+                    foreach (var req in currentQuest.requirements)
+                    {
+                        if (req == null) continue;
+                        if (req.Item != null)
+                        {
+                            int have = inventory != null ? inventory.GetQuantity(req.Item.ItemId) : 0;
+                            reqs += $"{(have >= req.quantity ? "[x]" : "[ ]")} {req.Item.DisplayName}: {have}/{req.quantity}\n";
+                        }
+                        else if (req.MagazineType != null)
+                        {
+                            int have = holder != null ? holder.CountMagazines(req.MagazineType) : 0;
+                            reqs += $"{(have >= req.quantity ? "[x]" : "[ ]")} {req.MagazineType.displayName}: {have}/{req.quantity}\n";
+                        }
+                    }
                 }
 
                 if (currentQuest.requiredKills > 0)
@@ -338,11 +437,20 @@ namespace WAD.Taskmaster
             if (rewardsText != null)
             {
                 string rewards = "";
-                foreach (var reward in currentQuest.itemRewards)
+                if (currentQuest.itemRewards != null)
                 {
-                    var item = reward.Item;
-                    if (item == null) continue;
-                    rewards += $"{item.DisplayName} x{reward.quantity}\n";
+                    foreach (var reward in currentQuest.itemRewards)
+                    {
+                        var item = reward != null ? reward.Item : null;
+                        if (item != null)
+                        {
+                            rewards += $"{item.DisplayName} x{reward.quantity}\n";
+                        }
+                        else if (reward != null && reward.MagazineType != null)
+                        {
+                            rewards += $"{reward.MagazineType.displayName} x{reward.quantity}\n";
+                        }
+                    }
                 }
                 if (currentQuest.weaponReward != null) rewards += $"Waffe: {currentQuest.weaponReward.displayName}\n";
                 if (currentQuest.attachmentReward != null) rewards += $"Attachment: {currentQuest.attachmentReward.displayName}\n";
@@ -352,18 +460,30 @@ namespace WAD.Taskmaster
                 rewardsText.text = rewards;
             }
 
-            if (turnInButton != null)
+            bool sharedActionButton = turnInButton != null && ReferenceEquals(turnInButton, acceptButton);
+            if (sharedActionButton)
+            {
+                bool canAccept = unlocked && status == QuestStatus.Available;
+                bool showAction = !completed && unlocked && (canTurnIn || canAccept);
+                turnInButton.interactable = canTurnIn || canAccept;
+                turnInButton.gameObject.SetActive(showAction);
+                if (turnInButtonLabel != null)
+                {
+                    turnInButtonLabel.text = canTurnIn ? "Abgeben" : canAccept ? "Annehmen" : "";
+                }
+            }
+            else if (turnInButton != null)
             {
                 turnInButton.interactable = canTurnIn && !completed;
                 turnInButton.gameObject.SetActive(!completed);
             }
 
-            if (turnInButtonLabel != null)
+            if (!sharedActionButton && turnInButtonLabel != null)
             {
                 turnInButtonLabel.text = canTurnIn ? "Abgeben" : "Anforderungen fehlen";
             }
 
-            if (acceptButton != null)
+            if (acceptButton != null && !sharedActionButton)
             {
                 // Der "Annehmen"-Button ist nur sinnvoll, wenn die Aufgabe noch nicht laeuft
                 acceptButton.gameObject.SetActive(!completed && status == QuestStatus.Available && unlocked);
@@ -389,10 +509,17 @@ namespace WAD.Taskmaster
         {
             if (currentTaskmaster == null || currentQuest == null) return;
 
-            // "Annehmen" markiert die Aufgabe als laufend (fuer die Statusanzeige).
-            // Der eigentliche Fortschritt haengt an den Anforderungen.
+            if (!currentTaskmaster.AcceptQuest(currentQuest)) return;
             RebuildQuestList();
             RefreshDetail();
+        }
+
+        private void HandlePrimaryActionClicked()
+        {
+            if (currentTaskmaster == null || currentQuest == null) return;
+
+            if (currentTaskmaster.CanTurnIn(currentQuest, inventory)) HandleTurnInClicked();
+            else HandleAcceptClicked();
         }
     }
 }

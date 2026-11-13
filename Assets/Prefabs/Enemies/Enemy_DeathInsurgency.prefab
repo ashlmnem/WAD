@@ -207,6 +207,37 @@ MonoBehaviour:
   limbType: 3
   damageMultiplier: 0.7
   limbHealthSystem: {fileID: 3692119748079179660}
+--- !u!1 &5510935608917753300
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5510935608917753301}
+  m_Layer: 11
+  m_Name: WeaponMount
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5510935608917753301
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5510935608917753300}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0.25, y: 0.4499998, z: 0.049999237}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2066704389862002120}
+  m_LocalEulerAnglesHint: {x: -90, y: 0, z: 0}
 --- !u!1 &6160258274212287465
 GameObject:
   m_ObjectHideFlags: 0
@@ -387,42 +418,11 @@ Transform:
   - {fileID: 6400481092897746451}
   - {fileID: 5931966978286260080}
   - {fileID: 8033943301791425644}
-    - {fileID: 2534984142552780857}
+  - {fileID: 2534984142552780857}
   - {fileID: 4758005378447311929}
   - {fileID: 2947512396341388459}
   - {fileID: 5510935608917753301}
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &5510935608917753300
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 5510935608917753301}
-  m_Layer: 11
-  m_Name: WeaponMount
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &5510935608917753301
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5510935608917753300}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.25, y: 0.45, z: 0.05}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2066704389862002120}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &778693029272371303
 MeshFilter:
@@ -449,6 +449,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -470,9 +475,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!195 &212702349321279935
 NavMeshAgent:
@@ -507,6 +514,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -606,12 +614,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sightRange: 150
   attackRange: 30
+  loseTargetSeconds: 12
   playerLayer:
     serializedVersion: 2
     m_Bits: 1024
   obstructionLayers:
     serializedVersion: 2
     m_Bits: 3031
+  hearingRange: 160
+  investigateDuration: 8
+  investigateSearchRadius: 7
+  investigateSearchInterval: 1.5
   patrolPoints: []
   patrolWaitSeconds: 3
   damagePerHit: 10
@@ -620,42 +633,16 @@ MonoBehaviour:
   deathLootTable: {fileID: 11400000, guid: cf4db408077d1554ba147585251deeee, type: 2}
   droppedWeapon: {fileID: 11400000, guid: a9497db1c2e756c418a8567b32d82f17, type: 2}
   droppedWeaponChance: 0.9
-  corpseLootPrefab: {fileID: 522197881460312008, guid: 442ff6ec69d64d346a681b3d766fba75,
-    type: 3}
-  requireGroupToAttack: 1
+  corpseLootPrefab: {fileID: 0}
+  requireGroupToAttack: 0
   minGroupSize: 1
   groupCheckRadius: 15
   sameTypeLayer:
     serializedVersion: 2
     m_Bits: 2048
   legDestroyedSpeedMultiplier: 0.3
-  wanderRadius: 150
-  wanderWaitSeconds: 4
---- !u!114 &4829417254720584311
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8927419042628372625}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9c4a386c7c564c86a5bf4043f1e31472, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  weaponOptions:
-  - {fileID: 11400000, guid: a9497db1c2e756c418a8567b32d82f17, type: 2}
-  - {fileID: 11400000, guid: e3e8cd9bab95d49448297b19318b5911, type: 2}
-  weaponMount: {fileID: 5510935608917753301}
-  weaponLocalPosition: {x: 0, y: 0, z: 0}
-  weaponLocalEulerAngles: {x: -90, y: 180, z: 0}
-  weaponForwardAxis: {x: 0, y: 1, z: 0}
-  attachmentOptions:
-  - {fileID: 11400000, guid: 4b5dbaf1012858f46b1b2a8d1d10bb66, type: 2}
-  - {fileID: 11400000, guid: 7b97ad1b330a7bb4981752b1a832c080, type: 2}
-  minAttachments: 1
-  maxAttachments: 2
-  spreadMultiplier: 12
+  wanderRadius: 800
+  wanderWaitSeconds: 1
 --- !u!114 &3161210481793001815
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -678,6 +665,10 @@ MonoBehaviour:
   suppressiveFireDuration: 4
   suppressiveFireCooldown: 2
   suppressiveSpreadMultiplier: 3
+  useCornerSlicing: 1
+  cornerSliceDistance: 1.1
+  cornerSliceInterval: 0.55
+  cornerSliceNavSampleRadius: 1.5
 --- !u!114 &332782533458452040
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -708,8 +699,13 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 4a79f06891a7fd744bc4d58c7d0d542a, type: 3}
   deathSounds:
   - {fileID: 8300000, guid: 14ef95196a79b494aab3ef0907ce0876, type: 3}
+  attackSounds: []
+  suppressedSounds: []
+  alertedSounds: []
   minIdleInterval: 6
   maxIdleInterval: 14
+  feedback: {fileID: 0}
+  combatAI: {fileID: 0}
 --- !u!114 &3692119748079179660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -753,6 +749,39 @@ MonoBehaviour:
   nearMissWindowSeconds: 3
   suppressionDuration: 2
   suppressionCooldown: 3
+--- !u!114 &4829417254720584311
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8927419042628372625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c4a386c7c564c86a5bf4043f1e31472, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weaponOptions:
+  - {fileID: 11400000, guid: a9497db1c2e756c418a8567b32d82f17, type: 2}
+  - {fileID: 11400000, guid: e3e8cd9bab95d49448297b19318b5911, type: 2}
+  weaponMount: {fileID: 5510935608917753301}
+  weaponLocalPosition: {x: 0, y: 0, z: 0}
+  weaponLocalEulerAngles: {x: -90, y: 180, z: 0}
+  weaponForwardAxis: {x: 0, y: 1, z: 0}
+  attachmentOptions:
+  - {fileID: 11400000, guid: 4b5dbaf1012858f46b1b2a8d1d10bb66, type: 2}
+  - {fileID: 11400000, guid: 7b97ad1b330a7bb4981752b1a832c080, type: 2}
+  - {fileID: 11400000, guid: 13cc661a9dad06e44b4af234af818877, type: 2}
+  - {fileID: 11400000, guid: 70c7b40a9eea3ec47aea41c8b4a64afb, type: 2}
+  - {fileID: 11400000, guid: b7d9517d3bba4848beaeb2736ead4e11, type: 2}
+  - {fileID: 11400000, guid: da3360222efe4ad6a1b6dc385e3bba6f, type: 2}
+  - {fileID: 11400000, guid: b76e369cfd318bb4c98105f861defe3c, type: 2}
+  - {fileID: 11400000, guid: 14766f44e406e7c4491dea8ae2bcbd37, type: 2}
+  - {fileID: 11400000, guid: d6eaf6a2b8dde6148a769f95ef5df7fb, type: 2}
+  - {fileID: 11400000, guid: 72e5e9412dbd39f418026656bc67dc98, type: 2}
+  minAttachments: 1
+  maxAttachments: 10
+  spreadMultiplier: 2
 --- !u!1 &9024993938752696503
 GameObject:
   m_ObjectHideFlags: 0

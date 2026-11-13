@@ -23,13 +23,14 @@ namespace WAD.Enemies
         [Min(0)] public int maxAttachments = 2;
 
         [Header("AI Accuracy")]
-        [Min(0f)] public float spreadMultiplier = 12f;
+        [Min(0f)] public float spreadMultiplier = 2f;
 
         private WeaponController weapon;
         private EnemyController enemy;
 
         public bool HasWeapon => weapon != null && weapon.weaponData != null;
         public WeaponSO SelectedWeapon => weapon != null ? weapon.weaponData : null;
+        public WeaponController EquippedWeapon => weapon;
 
         private struct AttachmentChoice
         {

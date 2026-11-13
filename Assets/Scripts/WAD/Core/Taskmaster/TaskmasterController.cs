@@ -3,6 +3,7 @@ using UnityEngine;
 using WAD.Core;
 using WAD.Inventory;
 using WAD.Weapons;
+using WAD.Weapons.Attachments;
 
 namespace WAD.Taskmaster
 {
@@ -39,7 +40,7 @@ namespace WAD.Taskmaster
         public bool playCutsceneOnFirstMeeting = true;
 
         private readonly HashSet<string> completedQuestIds = new HashSet<string>();
-        private readonly HashSet<string> turnedInOnceIds = new HashSet<string>();
+        private readonly HashSet<string> acceptedQuestIds = new HashSet<string>();
         private bool firstMeetingDone;
 
         public bool FirstMeetingDone => firstMeetingDone;
@@ -48,7 +49,7 @@ namespace WAD.Taskmaster
 
         private void Awake()
         {
-            if (taskmasterUI == null) taskmasterUI = FindFirstObjectByType<TaskmasterUI>(FindObjectsInactive.Include);
+            ResolveTaskmasterUI();
             if (cutscenePlayer == null) cutscenePlayer = FindFirstObjectByType<WAD.Cutscenes.CutscenePlayer>();
 
             ValidateQuests();
@@ -57,6 +58,8 @@ namespace WAD.Taskmaster
         /// <summary> Meldet fehlerhaft konfigurierte Aufgaben direkt beim Start. </summary>
         private void ValidateQuests()
         {
+            if (availableQuests == null) availableQuests = new List<TaskmasterQuestSO>();
+
             var seen = new HashSet<string>();
 
             foreach (var quest in availableQuests)
@@ -73,6 +76,25 @@ namespace WAD.Taskmaster
                 if (!seen.Add(quest.questId))
                 {
                     Debug.LogError($"[Taskmaster:{name}] Doppelte questId '{quest.questId}' - Aufgaben muessen eindeutig sein.");
+                }
+
+                ValidateRequirements(quest, quest.requirements, "Anforderung");
+                ValidateRequirements(quest, quest.itemRewards, "Belohnung");
+            }
+        }
+
+        private void ValidateRequirements(TaskmasterQuestSO quest, List<ItemRequirement> requirements, string label)
+        {
+            if (requirements == null) return;
+            foreach (ItemRequirement requirement in requirements)
+            {
+                if (requirement == null || (requirement.Item == null && requirement.MagazineType == null))
+                {
+                    Debug.LogError($"[Taskmaster:{name}] {label} in '{quest.title}' hat kein gueltiges Item/Magazin zugewiesen.");
+                }
+                else if (requirement.quantity <= 0)
+                {
+                    Debug.LogError($"[Taskmaster:{name}] {label} in '{quest.title}' muss eine Menge groesser 0 haben.");
                 }
             }
         }
@@ -104,7 +126,7 @@ namespace WAD.Taskmaster
 
         private void OpenDialogue()
         {
-            if (taskmasterUI == null) taskmasterUI = FindFirstObjectByType<TaskmasterUI>(FindObjectsInactive.Include);
+            ResolveTaskmasterUI();
 
             if (taskmasterUI == null)
             {
@@ -113,6 +135,24 @@ namespace WAD.Taskmaster
             }
 
             taskmasterUI.Open(this);
+        }
+
+        private void ResolveTaskmasterUI()
+        {
+            if (taskmasterUI != null)
+            {
+                var uiScene = taskmasterUI.gameObject.scene;
+                if (!uiScene.IsValid() || !uiScene.isLoaded)
+                {
+                    taskmasterUI = Instantiate(taskmasterUI);
+                    taskmasterUI.name = taskmasterUI.name.Replace("(Clone)", "").Trim();
+                }
+            }
+
+            if (taskmasterUI == null)
+            {
+                taskmasterUI = FindFirstObjectByType<TaskmasterUI>(FindObjectsInactive.Include);
+            }
         }
 
         /// <summary> Wird von der UI aufgerufen, wenn der Schliessen-Button gedrueckt wird. </summary>
@@ -138,12 +178,14 @@ namespace WAD.Taskmaster
 
             var run = RunStateManager.Instance;
 
-            if (quest.requiredLevelIndex > 0 && run != null && run.currentLevelIndex < quest.requiredLevelIndex) return false;
+            if (quest.requiredLevelIndex > 0 && (run == null || run.currentLevelIndex < quest.requiredLevelIndex)) return false;
 
-            foreach (var prereq in quest.prerequisiteQuests)
+            if (quest.prerequisiteQuests != null)
             {
-                if (prereq == null) continue;
-                if (!IsCompleted(prereq)) return false;
+                foreach (var prereq in quest.prerequisiteQuests)
+                {
+                    if (prereq != null && !IsCompleted(prereq)) return false;
+                }
             }
 
             return true;
@@ -158,7 +200,13 @@ namespace WAD.Taskmaster
 
             if (AreRequirementsMet(quest, inventory)) return QuestStatus.ReadyToTurnIn;
 
-            return turnedInOnceIds.Contains(quest.questId) ? QuestStatus.Active : QuestStatus.Available;
+            return acceptedQuestIds.Contains(quest.questId) ? QuestStatus.Active : QuestStatus.Available;
+        }
+
+        public bool AcceptQuest(TaskmasterQuestSO quest)
+        {
+            if (quest == null || !quest.HasValidId || IsCompleted(quest) || !IsUnlocked(quest)) return false;
+            return acceptedQuestIds.Add(quest.questId);
         }
 
         /// <summary> Alle Anforderungen inkl. Kills und Flags erfuellt? </summary>
@@ -167,12 +215,26 @@ namespace WAD.Taskmaster
             if (quest == null) return false;
 
             // Item-Anforderungen
-            foreach (var req in quest.requirements)
+            if (quest.requirements != null)
             {
-                var item = req.Item;
-                if (item == null) continue;
-                if (inventory == null) return false;
-                if (inventory.GetQuantity(item.ItemId) < req.quantity) return false;
+                PlayerWeaponHolder holder = inventory != null && inventory.weaponHolder != null
+                    ? inventory.weaponHolder
+                    : FindPlayerWeaponHolder();
+
+                foreach (var req in quest.requirements)
+                {
+                    if (req == null || req.quantity <= 0) return false;
+
+                    if (req.Item != null)
+                    {
+                        if (inventory == null || inventory.GetQuantity(req.Item.ItemId) < req.quantity) return false;
+                    }
+                    else if (req.MagazineType != null)
+                    {
+                        if (holder == null || holder.CountMagazines(req.MagazineType) < req.quantity) return false;
+                    }
+                    else return false;
+                }
             }
 
             // Kill-Anforderung
@@ -187,7 +249,7 @@ namespace WAD.Taskmaster
             if (!string.IsNullOrEmpty(quest.requiredFlag))
             {
                 var run = RunStateManager.Instance;
-                if (run != null && !run.HasFlag(quest.requiredFlag)) return false;
+                if (run == null || !run.HasFlag(quest.requiredFlag)) return false;
             }
 
             return true;
@@ -206,7 +268,34 @@ namespace WAD.Taskmaster
             if (IsCompleted(quest)) return false;
             if (!IsUnlocked(quest)) return false;
 
-            return AreRequirementsMet(quest, inventory);
+            if (!AreRequirementsMet(quest, inventory)) return false;
+
+            PlayerWeaponHolder holder = inventory != null && inventory.weaponHolder != null
+                ? inventory.weaponHolder
+                : FindPlayerWeaponHolder();
+
+            if (quest.itemRewards != null)
+            {
+                foreach (ItemRequirement reward in quest.itemRewards)
+                {
+                    if (reward == null || reward.quantity <= 0) return false;
+                    if (reward.Item != null)
+                    {
+                        if (inventory == null) return false;
+                    }
+                    else if (reward.MagazineType != null)
+                    {
+                        if (holder == null || !holder.CanAcceptMagazine(reward.MagazineType)) return false;
+                    }
+                    else return false;
+                }
+            }
+
+            if (quest.weaponReward != null && (holder == null ||
+                (quest.weaponReward.worldModelPrefab == null && quest.weaponReward.viewmodelPrefab == null))) return false;
+
+            if (quest.attachmentReward != null && !CanGrantAttachment(quest.attachmentReward, holder)) return false;
+            return true;
         }
 
         /// <summary> Gibt die Aufgabe ab: entfernt Anforderungen, gewaehrt Belohnungen. </summary>
@@ -214,32 +303,52 @@ namespace WAD.Taskmaster
         {
             if (!CanTurnIn(quest, inventory)) return false;
 
-            foreach (var req in quest.requirements)
+            PlayerWeaponHolder holder = weaponHolder != null
+                ? weaponHolder
+                : inventory != null && inventory.weaponHolder != null
+                    ? inventory.weaponHolder
+                    : FindFirstObjectByType<PlayerWeaponHolder>();
+
+            if (quest.requirements != null)
             {
-                var item = req.Item;
-                if (item == null) continue;
-                inventory.RemoveItem(item.ItemId, req.quantity);
+                foreach (var req in quest.requirements)
+                {
+                    if (req == null) continue;
+                    var item = req.Item;
+                    if (item != null) inventory?.RemoveItem(item.ItemId, req.quantity);
+                    else if (req.MagazineType != null) holder?.RemoveMagazines(req.MagazineType, req.quantity);
+                }
             }
 
-            foreach (var reward in quest.itemRewards)
+            if (quest.itemRewards != null)
             {
-                var item = reward.Item;
-                if (item == null) continue;
-                inventory.AddItem(item, reward.quantity);
+                foreach (var reward in quest.itemRewards)
+                {
+                    var item = reward != null ? reward.Item : null;
+                    if (item != null) inventory?.AddItem(item, reward.quantity);
+                    else if (reward != null && reward.MagazineType != null)
+                    {
+                        holder?.AddReserveMagazines(reward.MagazineType, reward.quantity);
+                    }
+                }
             }
 
-            if (quest.weaponReward != null && weaponHolder != null && quest.weaponReward.viewmodelPrefab != null)
+            if (quest.weaponReward != null && holder != null)
             {
-                GameObject instance = Instantiate(quest.weaponReward.viewmodelPrefab);
-                var controller = instance.GetComponent<WeaponController>();
-                if (controller != null) weaponHolder.PickUpWeapon(controller);
+                GameObject prefab = quest.weaponReward.worldModelPrefab != null
+                    ? quest.weaponReward.worldModelPrefab
+                    : quest.weaponReward.viewmodelPrefab;
+                GameObject instance = Instantiate(prefab);
+                var controller = instance.GetComponentInChildren<WeaponController>(true);
+                if (controller == null) controller = instance.AddComponent<WeaponController>();
+                controller.weaponData = quest.weaponReward;
+                EnsureWeaponAmmo(controller);
+                holder.PickUpWeapon(controller);
             }
 
             if (quest.attachmentReward != null)
             {
-                var active = weaponHolder?.GetActiveWeapon();
-                Debug.Log($"[Taskmaster] Attachment-Belohnung '{quest.attachmentReward.displayName}' erhalten - manuell an einer Rail montieren.");
-                // Bewusst kein Auto-Mount: der Spieler waehlt selbst die passende Rail.
+                GrantAttachment(quest.attachmentReward, holder);
             }
 
             if (quest.fuelReward > 0f)
@@ -247,7 +356,7 @@ namespace WAD.Taskmaster
                 RunStateManager.Instance?.AddFuel(quest.fuelReward);
             }
 
-            turnedInOnceIds.Add(quest.questId);
+            acceptedQuestIds.Remove(quest.questId);
 
             if (!quest.repeatable)
             {
@@ -267,6 +376,7 @@ namespace WAD.Taskmaster
         {
             var result = new List<TaskmasterQuestSO>();
 
+            if (availableQuests == null) return result;
             foreach (var quest in availableQuests)
             {
                 if (quest == null) continue;
@@ -278,5 +388,51 @@ namespace WAD.Taskmaster
         }
 
         public void MarkFirstMeetingDone() => firstMeetingDone = true;
+
+        private static PlayerWeaponHolder FindPlayerWeaponHolder() =>
+            UnityEngine.Object.FindFirstObjectByType<PlayerWeaponHolder>();
+
+        private static bool CanGrantAttachment(AttachmentSO attachment, PlayerWeaponHolder holder)
+        {
+            if (attachment == null || holder == null || holder.equippedWeapons == null) return false;
+            foreach (WeaponController weapon in holder.equippedWeapons)
+            {
+                var manager = weapon != null ? weapon.GetComponent<WeaponAttachmentManager>() : null;
+                if (manager == null || manager.railMounts == null || !attachment.IsCompatibleWith(weapon.weaponData)) continue;
+                foreach (RailMount rail in manager.railMounts)
+                {
+                    if (rail != null && rail.Accepts(attachment.category)) return true;
+                }
+            }
+            return false;
+        }
+
+        private static void GrantAttachment(AttachmentSO attachment, PlayerWeaponHolder holder)
+        {
+            foreach (WeaponController weapon in holder.equippedWeapons)
+            {
+                var manager = weapon != null ? weapon.GetComponent<WeaponAttachmentManager>() : null;
+                if (manager == null || manager.railMounts == null || !attachment.IsCompatibleWith(weapon.weaponData)) continue;
+                foreach (RailMount rail in manager.railMounts)
+                {
+                    if (rail != null && rail.Accepts(attachment.category) && manager.EquipAttachment(rail.railId, attachment)) return;
+                }
+            }
+        }
+
+        private static void EnsureWeaponAmmo(WeaponController weapon)
+        {
+            MagazineTypeSO defaultMagazine = weapon.weaponData != null ? weapon.weaponData.DefaultMagazineType : null;
+            if (weapon.loadedMagazine == null || weapon.loadedMagazine.magazineType == null)
+            {
+                weapon.loadedMagazine = defaultMagazine != null ? new Magazine(defaultMagazine) : null;
+            }
+            if (weapon.reserveMagazines == null) weapon.reserveMagazines = new List<Magazine>();
+            weapon.reserveMagazines.RemoveAll(magazine => magazine == null);
+            if (defaultMagazine != null && weapon.reserveMagazines.Count == 0)
+            {
+                weapon.reserveMagazines.Add(new Magazine(defaultMagazine));
+            }
+        }
     }
 }

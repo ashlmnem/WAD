@@ -6,7 +6,7 @@ using WAD.Combat;
 
 namespace WAD.Enemies
 {
-    public enum EnemyState { Patrol, Chase, Attack, Dead }
+    public enum EnemyState { Patrol, Investigate, Chase, Attack, Dead }
 
     /// <summary>
     /// Generisches Gegner-Grundgeruest, wiederverwendbar fuer alle Gegnertypen.
@@ -22,9 +22,15 @@ namespace WAD.Enemies
         public float sightRange = 25f;
         public float attackRange = 15f;
         [Tooltip("Wie lange der Gegner die letzte bekannte Spielerposition noch verfolgt, bevor er aufgibt")]
-        public float loseTargetSeconds = 4f;
+        [Min(0.5f)] public float loseTargetSeconds = 10f;
         public LayerMask playerLayer;
         public LayerMask obstructionLayers;
+
+        [Header("Geraeusch-Wahrnehmung")]
+        [Min(0f)] public float hearingRange = 160f;
+        [Min(0f)] public float investigateDuration = 8f;
+        [Min(0f)] public float investigateSearchRadius = 7f;
+        [Min(0.1f)] public float investigateSearchInterval = 1.5f;
 
         [Header("Patrol")]
         public Transform[] patrolPoints;
@@ -65,6 +71,9 @@ namespace WAD.Enemies
         // Verhindert, dass der Gegner den Spieler durch Waende hindurch "spuert".
         private Vector3 lastKnownPlayerPosition;
         private float lastSeenTime = -999f;
+        private float investigateUntil;
+        private float nextInvestigationSearchTime;
+        private Vector3 investigatePosition;
 
         [Header("Wander-Fallback (falls keine Patrol Points gesetzt sind)")]
         public float wanderRadius = 15f;
@@ -95,6 +104,7 @@ namespace WAD.Enemies
                 limbHealth.OnLimbDamaged += HandleLimbDamaged;
                 limbHealth.OnLimbDestroyed += HandleLimbDestroyed;
             }
+            EnemyNoiseStimulus.Emitted += HandleHeardNoise;
 
             // Ersten Pfad sofort anfordern: ohne Ziel ist 'remainingDistance'
             // unendlich, wodurch die Ankunftspruefung in TickPatrol/TickWander
@@ -114,6 +124,7 @@ namespace WAD.Enemies
                 limbHealth.OnLimbDamaged -= HandleLimbDamaged;
                 limbHealth.OnLimbDestroyed -= HandleLimbDestroyed;
             }
+            EnemyNoiseStimulus.Emitted -= HandleHeardNoise;
         }
 
         /// <summary> Fordert sofort ein (erstes) Patrouillen-/Wanderziel an. </summary>
@@ -154,8 +165,55 @@ namespace WAD.Enemies
             switch (state)
             {
                 case EnemyState.Patrol: TickPatrol(); break;
+                case EnemyState.Investigate: TickInvestigate(); break;
                 case EnemyState.Chase: TickChase(); break;
                 case EnemyState.Attack: TickAttack(); break;
+            }
+        }
+
+        private void HandleHeardNoise(Vector3 position, float audibleRadius, Transform source)
+        {
+            if (state == EnemyState.Dead || (source != null && source.root == transform.root)) return;
+
+            float range = Mathf.Min(hearingRange, audibleRadius);
+            if ((position - transform.position).sqrMagnitude > range * range) return;
+
+            if (IsEngagingPlayer)
+            {
+                if (Time.time - lastSeenTime > DetectionInterval)
+                {
+                    lastKnownPlayerPosition = position;
+                    lastSeenTime = Time.time;
+                }
+                return;
+            }
+
+            playerTransform = null;
+            investigatePosition = position;
+            investigateUntil = Time.time + investigateDuration;
+            nextInvestigationSearchTime = 0f;
+            state = EnemyState.Investigate;
+            SetDestinationSafe(position);
+            GetComponent<EnemyAudio>()?.NotifyAlerted();
+        }
+
+        private void TickInvestigate()
+        {
+            if (Time.time >= investigateUntil)
+            {
+                state = EnemyState.Patrol;
+                RequestPatrolDestination();
+                return;
+            }
+
+            if (!HasArrived() || Time.time < nextInvestigationSearchTime) return;
+            nextInvestigationSearchTime = Time.time + investigateSearchInterval;
+
+            Vector2 offset = Random.insideUnitCircle * investigateSearchRadius;
+            Vector3 candidate = investigatePosition + new Vector3(offset.x, 0f, offset.y);
+            if (NavMesh.SamplePosition(candidate, out NavMeshHit hit, investigateSearchRadius, NavMesh.AllAreas))
+            {
+                SetDestinationSafe(hit.position);
             }
         }
 
@@ -463,12 +521,31 @@ namespace WAD.Enemies
                 ? Instantiate(corpseLootPrefab, transform.position, transform.rotation)
                 : gameObject;
 
+            if (corpseObj.GetComponent<Collider>() == null)
+            {
+                var corpseCollider = corpseObj.AddComponent<CapsuleCollider>();
+                corpseCollider.center = Vector3.up * 0.9f;
+                corpseCollider.height = 1.8f;
+                corpseCollider.radius = 0.4f;
+            }
+
             var searchable = corpseObj.GetComponent<WAD.Inventory.CorpseSearchable>();
             if (searchable == null) searchable = corpseObj.AddComponent<WAD.Inventory.CorpseSearchable>();
+            if (searchable == null)
+            {
+                Debug.LogError($"[EnemyController:{name}] Failed to add CorpseSearchable to corpse '{corpseObj.name}'.", corpseObj);
+                return;
+            }
 
             searchable.lootTable = deathLootTable;
-            searchable.droppedWeapon = droppedWeapon;
-            searchable.droppedWeaponChance = droppedWeaponChance;
+            searchable.droppedWeaponInstance = weaponLoadout != null ? weaponLoadout.EquippedWeapon : null;
+            searchable.droppedWeapon = weaponLoadout != null && weaponLoadout.SelectedWeapon != null
+                ? weaponLoadout.SelectedWeapon
+                : droppedWeapon;
+            searchable.droppedWeaponWorldPrefab = searchable.droppedWeapon != null
+                ? searchable.droppedWeapon.worldModelPrefab
+                : null;
+            searchable.droppedWeaponChance = searchable.droppedWeaponInstance != null ? 1f : droppedWeaponChance;
             searchable.RollLoot();
         }
 
@@ -480,4 +557,5 @@ namespace WAD.Enemies
             Gizmos.DrawWireSphere(transform.position, attackRange);
         }
     }
+
 }

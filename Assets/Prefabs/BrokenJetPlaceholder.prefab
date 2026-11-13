@@ -518,7 +518,7 @@ MonoBehaviour:
   animator: {fileID: 0}
   effectSpawnPoint: {fileID: 0}
   spatialSounds: 1
-  logMissingActions: 0
+  logMissingActions: 1
   loopSource: {fileID: 6243539943240065228}
   loopVolume: 1
   loopFadeSeconds: 1.5

@@ -227,5 +227,84 @@ namespace WAD.Weapons
             }
             return total;
         }
+
+        public int CountMagazines(MagazineTypeSO magazineType)
+        {
+            if (magazineType == null) return 0;
+
+            int count = 0;
+            foreach (WeaponController weapon in equippedWeapons)
+            {
+                if (weapon == null) continue;
+                if (weapon.loadedMagazine != null && weapon.loadedMagazine.magazineType == magazineType) count++;
+
+                if (weapon.reserveMagazines == null) continue;
+                foreach (Magazine magazine in weapon.reserveMagazines)
+                {
+                    if (magazine != null && magazine.magazineType == magazineType) count++;
+                }
+            }
+
+            return count;
+        }
+
+        public int RemoveMagazines(MagazineTypeSO magazineType, int amount)
+        {
+            if (magazineType == null || amount <= 0) return 0;
+
+            int removed = 0;
+            foreach (WeaponController weapon in equippedWeapons)
+            {
+                if (weapon == null || removed >= amount) continue;
+
+                if (weapon.reserveMagazines != null)
+                {
+                    for (int i = weapon.reserveMagazines.Count - 1; i >= 0 && removed < amount; i--)
+                    {
+                        Magazine magazine = weapon.reserveMagazines[i];
+                        if (magazine == null || magazine.magazineType != magazineType) continue;
+                        weapon.reserveMagazines.RemoveAt(i);
+                        removed++;
+                    }
+                }
+
+                if (removed < amount && weapon.loadedMagazine != null && weapon.loadedMagazine.magazineType == magazineType)
+                {
+                    weapon.loadedMagazine = null;
+                    removed++;
+                }
+
+                weapon.NotifyAmmoChanged();
+            }
+
+            return removed;
+        }
+
+        public bool CanAcceptMagazine(MagazineTypeSO magazineType)
+        {
+            if (magazineType == null || equippedWeapons == null) return false;
+            foreach (WeaponController weapon in equippedWeapons)
+            {
+                if (weapon != null && weapon.weaponData != null && weapon.weaponData.AcceptsMagazine(magazineType)) return true;
+            }
+            return false;
+        }
+
+        public int AddReserveMagazines(MagazineTypeSO magazineType, int amount)
+        {
+            if (amount <= 0 || !CanAcceptMagazine(magazineType)) return 0;
+
+            foreach (WeaponController weapon in equippedWeapons)
+            {
+                if (weapon == null || weapon.weaponData == null || !weapon.weaponData.AcceptsMagazine(magazineType)) continue;
+                if (weapon.reserveMagazines == null) weapon.reserveMagazines = new List<Magazine>();
+
+                for (int i = 0; i < amount; i++) weapon.reserveMagazines.Add(new Magazine(magazineType));
+                weapon.NotifyAmmoChanged();
+                return amount;
+            }
+
+            return 0;
+        }
     }
 }

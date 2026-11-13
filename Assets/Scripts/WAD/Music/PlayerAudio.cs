@@ -1,6 +1,7 @@
 using UnityEngine;
 using WAD.Player;
 using WAD.Feedback;
+using WAD.Enemies;
 
 namespace WAD.Player
 {
@@ -29,6 +30,10 @@ namespace WAD.Player
         public AudioClip[] footstepSoundsSprint;
         public float walkStepInterval = 0.5f;
         public float sprintStepInterval = 0.32f;
+        [Header("AI-Hoerbarkeit")]
+        [Min(0f)] public float walkNoiseRadius = 22f;
+        [Min(0f)] public float sprintNoiseRadius = 60f;
+        [Min(0f)] public float crouchNoiseRadius = 10f;
 
         [Header("Schmerz/Tod")]
         public AudioClip[] hurtSounds;
@@ -85,6 +90,7 @@ namespace WAD.Player
                 if (sprinting)
                 {
                     PlayOrFallback(ActionId.FootstepSprint, footstepSoundsSprint);
+                    EnemyNoiseStimulus.Emit(transform.position, sprintNoiseRadius, transform);
                 }
                 else if (crouching)
                 {
@@ -97,10 +103,12 @@ namespace WAD.Player
                     {
                         PlayOrFallback(ActionId.FootstepWalk, footstepSoundsWalk, 0.5f);
                     }
+                    EnemyNoiseStimulus.Emit(transform.position, crouchNoiseRadius, transform);
                 }
                 else
                 {
                     PlayOrFallback(ActionId.FootstepWalk, footstepSoundsWalk);
+                    EnemyNoiseStimulus.Emit(transform.position, walkNoiseRadius, transform);
                 }
             }
         }

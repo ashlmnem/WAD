@@ -11,12 +11,13 @@ namespace WAD.Inventory
     /// durchsucht per Interaktion (siehe PlayerInteraction) - alles landet
     /// gesammelt im Inventar bzw. die Waffe wird direkt ausgeruestet.
     /// </summary>
-    [RequireComponent(typeof(Collider))]
     public class CorpseSearchable : MonoBehaviour, IInteractable
     {
         public LootTableSO lootTable;
         public WeaponSO droppedWeapon;
         [Range(0f, 1f)] public float droppedWeaponChance = 0.5f;
+        [Tooltip("Existing enemy weapon instance. Preserves its randomized attachments and magazine state.")]
+        public WeaponController droppedWeaponInstance;
 
         [Tooltip("Falls du ein fertiges Waffen-Weltmodell-Prefab hast (mit WeaponController drauf)")]
         public GameObject droppedWeaponWorldPrefab;
@@ -58,7 +59,7 @@ namespace WAD.Inventory
                 }
             }
 
-            if (droppedWeapon != null && Random.value <= droppedWeaponChance)
+            if ((droppedWeaponInstance != null || droppedWeapon != null) && Random.value <= droppedWeaponChance)
             {
                 weaponRolled = true;
             }
@@ -70,27 +71,73 @@ namespace WAD.Inventory
             if (hasBeenSearched) return;
             hasBeenSearched = true;
 
-            foreach (var (item, quantity) in rolledLoot)
+            if (inventory != null)
             {
-                inventory.AddItem(item, quantity);
+                foreach (var (item, quantity) in rolledLoot)
+                {
+                    inventory.AddItem(item, quantity);
+                }
             }
 
             if (weaponRolled && droppedWeapon != null && weaponHolder != null)
             {
-                GameObject weaponInstance = droppedWeaponWorldPrefab != null
-                    ? Instantiate(droppedWeaponWorldPrefab)
-                    : new GameObject($"Weapon_{droppedWeapon.weaponId}");
+                WeaponController controller = droppedWeaponInstance;
+                if (controller == null)
+                {
+                    GameObject prefab = droppedWeaponWorldPrefab != null
+                        ? droppedWeaponWorldPrefab
+                        : droppedWeapon.worldModelPrefab;
+                    if (prefab != null)
+                    {
+                        GameObject weaponObject = Instantiate(prefab, transform.position, transform.rotation);
+                        controller = weaponObject.GetComponentInChildren<WeaponController>(true);
+                    }
+                }
 
-                var controller = weaponInstance.GetComponent<WeaponController>();
-                if (controller == null) controller = weaponInstance.AddComponent<WeaponController>();
-                controller.weaponData = droppedWeapon;
-
-                weaponHolder.PickUpWeapon(controller);
+                if (controller != null)
+                {
+                    controller.weaponData = droppedWeapon;
+                    EnsureUsableMagazine(controller);
+                    weaponHolder.PickUpWeapon(controller);
+                }
+                else
+                {
+                    Debug.LogWarning($"[CorpseSearchable:{name}] Weapon '{droppedWeapon.displayName}' has no usable world prefab.", this);
+                    hasBeenSearched = false;
+                    return;
+                }
             }
 
             Debug.Log($"[CorpseSearchable] Durchsucht: {rolledLoot.Count} Item-Stacks{(weaponRolled ? " + Waffe" : "")}.");
 
             Destroy(gameObject);
+        }
+
+        private static void EnsureUsableMagazine(WeaponController controller)
+        {
+            if (controller.weaponData == null) return;
+
+            MagazineTypeSO defaultMagazine = controller.weaponData.DefaultMagazineType;
+            if (controller.loadedMagazine == null || controller.loadedMagazine.magazineType == null ||
+                controller.loadedMagazine.ammoType == null)
+            {
+                controller.loadedMagazine = defaultMagazine != null ? new Magazine(defaultMagazine) : null;
+            }
+
+            if (controller.reserveMagazines == null) controller.reserveMagazines = new List<Magazine>();
+            controller.reserveMagazines.RemoveAll(magazine => magazine == null);
+
+            bool hasReserve = false;
+            foreach (Magazine magazine in controller.reserveMagazines)
+            {
+                if (magazine != null && !magazine.IsEmpty && controller.weaponData.AcceptsMagazine(magazine.magazineType))
+                {
+                    hasReserve = true;
+                    break;
+                }
+            }
+
+            if (!hasReserve && defaultMagazine != null) controller.reserveMagazines.Add(new Magazine(defaultMagazine));
         }
     }
 }
